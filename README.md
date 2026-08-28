@@ -423,15 +423,6 @@ exclusively. Restricting each pump to a single deposit category at the entity le
 is nothing to dynamically restrict at runtime — a pump that can only ever recognize one deposit
 type simply has no ambiguity to resolve.
 
-## Roadmap
-
-The following are reserved in the mod's naming and structure but not yet implemented:
-
-- Carbon capture and storage (CCS) via CO₂ injection into a depleted crude oil deposit —
-  explored but intentionally deferred; see design notes for the trade-offs between a
-  data-only, narrative-only version and a Harmony-based version that converts the deposit's
-  underlying resource type.
-
 ## Compatibility
 
 This mod does not depend on any other mod. It is intended to be declared as a `mod_dependencies`
