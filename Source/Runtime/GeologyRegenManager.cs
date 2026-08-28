@@ -47,18 +47,30 @@ namespace GeologyReservoirEngineering.Runtime;
 /// completed a production cycle, and is checked here alongside <c>IsEnabled</c> so recharging
 /// only happens when the pump is genuinely running, not merely powered on.
 ///
-/// Crude oil and Natural Gas are recharged at a much lower rate than geothermal/groundwater
-/// deposits, using both a smaller amount per check (<see cref="SLOW_REGEN_PER_CHECK"/> vs.
-/// <see cref="REGEN_PER_CHECK"/>) and a longer interval between checks
-/// (<see cref="SLOW_CHECK_MULTIPLIER"/> - these two deposit types are only recharged once every
-/// that many general checks). Real enhanced oil recovery, hydraulic fracturing, and underground
-/// gas storage each improve how much of a field's resource is ultimately recoverable/available
-/// by a modest, bounded amount - none of them indefinitely refill a reservoir. Oil and gas share
-/// the same rate/cadence rather than each having its own, since both represent the same
-/// category of "geological, not indefinitely replenishable" resource in this mod's model.
+/// Three separate recharge rates are used, reflecting three different real-world pacing
+/// categories:
+/// <list type="bullet">
+/// <item>Geothermal (the three enthalpy tiers this mod introduces) recharges fastest
+/// (<see cref="GEOTHERMAL_REGEN_PER_CHECK"/> every <see cref="STEPS_BETWEEN_CHECKS"/> steps) -
+/// reinjection is an immediate, intentional part of geothermal operation, maintaining reservoir
+/// pressure for continued heat extraction.</item>
+/// <item>Groundwater recharges at a distinctly slower rate
+/// (<see cref="GROUNDWATER_REGEN_PER_CHECK"/>, checked only once every
+/// <see cref="GROUNDWATER_CHECK_MULTIPLIER"/> general checks) - real aquifer recharge, natural
+/// or managed, happens over much longer timescales than geothermal reinjection.</item>
+/// <item>Crude oil and Natural Gas recharge slowest of all
+/// (<see cref="SLOW_REGEN_PER_CHECK"/>, checked only once every
+/// <see cref="SLOW_CHECK_MULTIPLIER"/> general checks) - enhanced oil recovery, hydraulic
+/// fracturing, thermal EOR, acid stimulation, and underground gas storage each improve how much
+/// of a field's resource is ultimately recoverable/available by a modest, bounded amount, not an
+/// indefinite refill. Oil and gas share this same rate/cadence rather than each having their
+/// own, since both represent the same category of "geological, not indefinitely replenishable"
+/// resource in this mod's model.
+/// </item>
+/// </list>
 ///
-/// Recipe duration is not part of this pacing, despite its name suggesting otherwise: a machine
-/// is in <c>State.Working</c> - and therefore <c>WorkedThisTick</c> is true - on every
+/// Recipe duration is not part of any of this pacing, despite its name suggesting otherwise: a
+/// machine is in <c>State.Working</c> - and therefore <c>WorkedThisTick</c> is true - on every
 /// simulation tick a recipe is actively in progress, not only on the tick it completes. A pump
 /// running a 240-second recipe is "working" just as continuously as one running a 10-second
 /// recipe, provided its input supply never runs out. Recipe duration governs how much input a
@@ -69,11 +81,11 @@ namespace GeologyReservoirEngineering.Runtime;
 /// multiple pumps can be built at different positions and all resolve to the same underlying
 /// deposit. Without a cap, each working pump targeting that deposit would trigger its own
 /// <c>AddAsMuchAs</c> call in the same check, so recharge would scale linearly, and uncapped,
-/// with the number of pumps built around a single deposit - reachable even though
-/// <c>SLOW_REGEN_PER_CHECK</c>/<c>SLOW_CHECK_MULTIPLIER</c> deliberately keep a single pump's
-/// pace slow. <see cref="OnSimUpdate"/> tracks which deposits (by position) have already been
-/// recharged in the current check and skips any further pump targeting the same one, so
-/// building more pumps around a deposit adds redundancy rather than compounding recharge speed.
+/// with the number of pumps built around a single deposit - reachable even though each tier's
+/// own rate/cadence deliberately keeps a single pump's pace measured. <see cref="OnSimUpdate"/>
+/// tracks which deposits (by position) have already been recharged in the current check and
+/// skips any further pump targeting the same one, so building more pumps around a deposit adds
+/// redundancy rather than compounding recharge speed.
 ///
 /// The manager also periodically calls <see cref="Entity.UpdateIsEnabled"/> on each pump, since
 /// the engine only re-evaluates a machine's enabled state at discrete trigger points
@@ -86,26 +98,39 @@ namespace GeologyReservoirEngineering.Runtime;
 /// </summary>
 public sealed class GeologyRegenManager : IDisposable {
 
-    /// <summary>Quantity restored to a geothermal or groundwater deposit on each check.</summary>
-    private const int REGEN_PER_CHECK = 60;
+    /// <summary>Quantity restored to a geothermal deposit on each check.</summary>
+    private const int GEOTHERMAL_REGEN_PER_CHECK = 60;
+
+    /// <summary>
+    /// Quantity restored to the Groundwater deposit on each medium-tier check - substantially
+    /// lower than <see cref="GEOTHERMAL_REGEN_PER_CHECK"/>, since real aquifer recharge is much
+    /// slower than geothermal reinjection.
+    /// </summary>
+    private const int GROUNDWATER_REGEN_PER_CHECK = 20;
 
     /// <summary>
     /// Quantity restored to a crude oil or Natural Gas deposit on each slow-tier check -
-    /// substantially lower than <see cref="REGEN_PER_CHECK"/>, since EOR/fracturing/gas storage
-    /// represent a modest recovery/storage improvement in reality, not an indefinite refill.
+    /// substantially lower than either tier above, since EOR/fracturing/gas storage represent a
+    /// modest recovery/storage improvement in reality, not an indefinite refill.
     /// </summary>
     private const int SLOW_REGEN_PER_CHECK = 6;
 
-    /// <summary>Number of simulation steps between geothermal/groundwater checks.</summary>
+    /// <summary>Number of simulation steps between general checks.</summary>
     private const int STEPS_BETWEEN_CHECKS = 30;
 
     /// <summary>
-    /// Number of general checks between slow-tier (oil/gas) recharges - these deposits are
+    /// Number of general checks between medium-tier (Groundwater) recharges - the deposit is
     /// recharged only once every this many <see cref="STEPS_BETWEEN_CHECKS"/> cycles
-    /// (effectively every <c>STEPS_BETWEEN_CHECKS * SLOW_CHECK_MULTIPLIER</c> simulation steps),
-    /// on top of the already-reduced <see cref="SLOW_REGEN_PER_CHECK"/> amount, kept separate
-    /// from the geothermal/groundwater cadence so tuning oil/gas recharge speed doesn't affect
-    /// them.
+    /// (effectively every <c>STEPS_BETWEEN_CHECKS * GROUNDWATER_CHECK_MULTIPLIER</c> simulation
+    /// steps), on top of the already-reduced <see cref="GROUNDWATER_REGEN_PER_CHECK"/> amount,
+    /// kept separate from the geothermal and oil/gas cadences so tuning groundwater recharge
+    /// speed doesn't affect them.
+    /// </summary>
+    private const int GROUNDWATER_CHECK_MULTIPLIER = 3;
+
+    /// <summary>
+    /// Number of general checks between slow-tier (oil/gas) recharges - see
+    /// <see cref="GROUNDWATER_CHECK_MULTIPLIER"/> for how this style of multiplier works.
     /// </summary>
     private const int SLOW_CHECK_MULTIPLIER = 4;
 
@@ -114,6 +139,7 @@ public sealed class GeologyRegenManager : IDisposable {
     private readonly ISimLoopEvents m_simLoopEvents;
 
     private int m_stepsSinceLastCheck;
+    private int m_checksSinceLastGroundwaterRecharge;
     private int m_checksSinceLastSlowRecharge;
 
     public GeologyRegenManager(
@@ -138,6 +164,12 @@ public sealed class GeologyRegenManager : IDisposable {
             return;
         }
         m_stepsSinceLastCheck = 0;
+
+        m_checksSinceLastGroundwaterRecharge++;
+        bool rechargeGroundwaterThisCheck = m_checksSinceLastGroundwaterRecharge >= GROUNDWATER_CHECK_MULTIPLIER;
+        if (rechargeGroundwaterThisCheck) {
+            m_checksSinceLastGroundwaterRecharge = 0;
+        }
 
         m_checksSinceLastSlowRecharge++;
         bool rechargeSlowResourcesThisCheck = m_checksSinceLastSlowRecharge >= SLOW_CHECK_MULTIPLIER;
@@ -176,6 +208,10 @@ public sealed class GeologyRegenManager : IDisposable {
                     continue;
                 }
 
+                if (isGroundwater(resource) && !rechargeGroundwaterThisCheck) {
+                    continue;
+                }
+
                 int? regenAmount = regenAmountFor(resource);
                 if (!regenAmount.HasValue) {
                     continue;
@@ -196,21 +232,28 @@ public sealed class GeologyRegenManager : IDisposable {
         return id == Mafi.Core.IdsCore.Products.VirtualCrudeOil || id == ModIds.VirtualResources.NaturalGas;
     }
 
+    /// <summary>Whether the given resource is the vanilla Groundwater deposit.</summary>
+    private static bool isGroundwater(IVirtualTerrainResource resource) {
+        return resource.Product.Id == Mafi.Core.IdsCore.Products.Groundwater;
+    }
+
     /// <summary>
     /// The amount to recharge the given resource by on each check, or null if this mod does not
-    /// recognize it. Crude oil and Natural Gas use a distinctly lower rate than the other
-    /// recognized deposit types - see the class-level remarks.
+    /// recognize it. Crude oil, Natural Gas, and Groundwater each use a distinctly different
+    /// rate from geothermal - see the class-level remarks.
     /// </summary>
     private static int? regenAmountFor(IVirtualTerrainResource resource) {
         var id = resource.Product.Id;
         if (id == Mafi.Core.IdsCore.Products.VirtualCrudeOil || id == ModIds.VirtualResources.NaturalGas) {
             return SLOW_REGEN_PER_CHECK;
         }
+        if (id == Mafi.Core.IdsCore.Products.Groundwater) {
+            return GROUNDWATER_REGEN_PER_CHECK;
+        }
         if (id == ModIds.VirtualResources.GeothermalHighEnthalpy
             || id == ModIds.VirtualResources.GeothermalMediumEnthalpy
-            || id == ModIds.VirtualResources.GeothermalLowEnthalpy
-            || id == Mafi.Core.IdsCore.Products.Groundwater) {
-            return REGEN_PER_CHECK;
+            || id == ModIds.VirtualResources.GeothermalLowEnthalpy) {
+            return GEOTHERMAL_REGEN_PER_CHECK;
         }
         return null;
     }
