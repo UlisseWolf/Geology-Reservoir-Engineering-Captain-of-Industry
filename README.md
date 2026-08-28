@@ -41,12 +41,17 @@ production toolbar menu, alongside the vanilla "General" and "Nuclear" subcatego
 
 A dedicated water injection pump consumes water and recharges whichever recognized deposit is
 present at its location — a geothermal reservoir of any tier, or the vanilla Groundwater
-deposit — up to that deposit's configured capacity. It is restricted, at the entity level, to
-only ever recognize those four deposit types; it cannot recharge a crude oil or Natural Gas
-deposit even if built there by mistake — those are handled by their own dedicated pumps (see
-below). The pump automatically disables itself once the deposit it is recharging reaches full
-capacity. It is listed under the "Geothermal" subcategory described above, and under a
-"Groundwater" subcategory of the vanilla "Water" toolbar menu.
+deposit — up to that deposit's configured capacity. Geothermal reservoirs and Groundwater
+recharge at different rates: geothermal reinjection is fast, maintaining reservoir pressure for
+continued heat extraction, while Groundwater recharges noticeably slower, reflecting how real
+aquifer recharge happens over much longer timescales — see
+[Design notes and known limitations](#design-notes-and-known-limitations) for the exact figures.
+The pump is restricted, at the entity level, to only ever recognize those four deposit types; it
+cannot recharge a crude oil or Natural Gas deposit even if built there by mistake — those are
+handled by their own dedicated pumps (see below). The pump automatically disables itself once
+the deposit it is recharging reaches full capacity. It is listed under the "Geothermal"
+subcategory described above, and under a "Groundwater" subcategory of the vanilla "Water"
+toolbar menu.
 
 The vanilla Groundwater Pump is also moved into the "Groundwater" subcategory, so neither pump
 appears directly under the top-level "Water" menu. This is one of the features in this mod that
@@ -362,6 +367,18 @@ the entity's persistence behavior identical to the base `Machine` class it exten
 **Vanilla toolbar category reassignment is reflection-based, not a supported API.** See
 [How this mod uses Harmony](#how-this-mod-uses-harmony). This is the only part of the mod with
 this characteristic; every other feature uses documented, public APIs.
+
+**Recharge uses three distinct tiers, not two.** Geothermal, Groundwater, and crude
+oil/Natural Gas each recharge at a different pace, reflecting three different real-world
+categories: geothermal reinjection is immediate and intentional (60 units every 30 simulation
+steps — 2.0 units/step), Groundwater recharges noticeably slower (20 units every 90 steps —
+about 0.22 units/step, roughly 9× slower than geothermal), and crude oil/Natural Gas recharge
+slowest of all (6 units every 120 steps — 0.05 units/step, so Groundwater is still around 4-5×
+faster than oil/gas). Geothermal and Groundwater share a pump but not a rate; oil and Natural
+Gas share both a pump-family pattern and a rate, since both represent the same "geological, not
+indefinitely replenishable" category in this mod's model, while Groundwater is a naturally
+replenishing resource that just recharges more slowly than an actively-managed geothermal
+reservoir.
 
 **Recipe duration does not pace recharge rate; only `GeologyRegenManager`'s own constants do.**
 A machine is in `State.Working` (and therefore `Machine.WorkedThisTick` is true) on every
