@@ -1,0 +1,89 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="Options.user" Condition="Exists('Options.user')" />
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <Configurations>Debug;Release</Configurations>
+    <RootNamespace>GeologyReservoirEngineering</RootNamespace>
+    <AssemblyName>GeologyReservoirEngineering</AssemblyName>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!-- Deploy to %APPDATA%\Captain of Industry\Mods\<TargetName>\ after every build, same
+         mechanism as ExampleMod.csproj / FusionHorizon.csproj. -->
+    <DeployToModsFolder>true</DeployToModsFolder>
+    <COI_MODS Condition="'$(COI_MODS)' == ''">$(APPDATA)\Captain of Industry\Mods</COI_MODS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Options.user" Condition="Exists('Options.user')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Source\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Thumbnail.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Thumbnail.png')" />
+    <Content Include="Translations\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GameAssembly Include="Mafi" />
+    <GameAssembly Include="Mafi.Core" />
+    <GameAssembly Include="Mafi.Base" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 0Harmony.dll is bundled in Libs/, since it is not part of the game install. -->
+    <Reference Include="0Harmony">
+      <HintPath>Libs\0Harmony.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- AssetBundles built from a companion Unity project (see README.md "Custom assets"), if
+       any exist. Not source-compiled - DeployToModsFolder below copies them to a dedicated
+       AssetBundles subfolder, same pattern as Fusion Horizon's own csproj. -->
+  <ItemGroup Condition="Exists('AssetBundles')">
+    <AssetBundles Include="AssetBundles\**\*" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">$(COI_ROOT)</GameDir>
+    <GameManagedDir Condition="'$(GameManagedDir)' == ''">$(GameDir)\Captain of Industry_Data\Managed</GameManagedDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="@(GameAssembly)">
+      <HintPath Condition="Exists('$(GameManagedDir)\%(Identity).dll')">$(GameManagedDir)\%(Identity).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CheckGameDir" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <_InvalidGameDir Condition="!Exists('$(GameManagedDir)')">true</_InvalidGameDir>
+    </PropertyGroup>
+    <Error Text="No valid Captain of Industry installation directory set. Set the COI_ROOT environment variable, or create an Options.user file overriding GameDir, pointing to your game install." ContinueOnError="false" Condition="'$(_InvalidGameDir)' == 'true'" />
+  </Target>
+
+  <Target Name="DeployToModsFolder" AfterTargets="PostBuildEvent" Condition="'$(DeployToModsFolder)' == 'true' AND '$(ProjectDir)' != '*Undefined*'">
+    <Copy SourceFiles="$(ProjectDir)manifest.json" DestinationFolder="$(COI_MODS)\$(TargetName)\" />
+    <Copy SourceFiles="$(ProjectDir)Thumbnail.png" DestinationFolder="$(COI_MODS)\$(TargetName)\" Condition="Exists('$(ProjectDir)Thumbnail.png')" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(COI_MODS)\$(TargetName)\" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(COI_MODS)\$(TargetName)\" Condition="'$(Configuration)' == 'Debug' AND Exists('$(TargetDir)$(TargetName).pdb')" />
+    <Copy SourceFiles="$(ProjectDir)Libs\0Harmony.dll" DestinationFolder="$(COI_MODS)\$(TargetName)\" />
+    <ItemGroup>
+      <_DeployedTranslations Include="$(ProjectDir)Translations\**\*" />
+      <_DeployedTranslationsDest Include="@(_DeployedTranslations->Replace('$(ProjectDir)Translations\', '$(COI_MODS)\$(TargetName)\Translations\'))" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_DeployedTranslations)" DestinationFiles="@(_DeployedTranslationsDest)" SkipUnchangedFiles="true" Condition="Exists('$(ProjectDir)Translations')" />
+    <Copy SourceFiles="@(AssetBundles)" DestinationFolder="$(COI_MODS)\$(TargetName)\AssetBundles" Condition="'@(AssetBundles)' != ''" />
+    <Message Text="[GeologyReservoirEngineering] Deployed to $(COI_MODS)\$(TargetName)\" Importance="high" />
+  </Target>
+</Project>
