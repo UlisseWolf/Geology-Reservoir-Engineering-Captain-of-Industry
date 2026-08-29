@@ -156,9 +156,11 @@ internal static class NaturalGasMapPatch {
     /// Adds a co-located Natural Gas deposit for every crude oil deposit already present in the
     /// live game world that doesn't already have one at the exact same position - covering
     /// saves whose map was generated before this mechanism existed. Called once per game
-    /// session from <c>GeologyReservoirEngineeringMod.Initialize</c>; safe to call on a freshly
-    /// generated map too, since the "already has gas at this position" check means the two
-    /// generation-time patches above and this one never double up.
+    /// session from <c>GeologyReservoirEngineeringMod.Initialize</c>. On a brand new game, mod
+    /// initialization can run before the vanilla <c>VirtualResourceManager</c> has populated its
+    /// resource list for the freshly generated map yet, in which case there is nothing to
+    /// retrofit and this method returns immediately - the two generation-time patches above
+    /// already handle a brand new game's deposits directly.
     /// </summary>
     public static void RetrofitExistingSave(IVirtualResourceManager virtualResourceManager) {
         if (NaturalGasProto == null) {
@@ -173,6 +175,15 @@ internal static class NaturalGasMapPatch {
         FieldInfo mapField = AccessTools.Field(typeof(VirtualResourceManager), "m_virtualResourcesMap");
 
         var current = (ImmutableArray<IVirtualTerrainResource>)listField.GetValue(manager);
+        if (current.IsNotValid) {
+            // On a brand new game, mod Initialize() can run before the vanilla
+            // VirtualResourceManager has populated this field for the freshly generated map -
+            // its default value is an uninitialized ImmutableArray wrapping a null backing
+            // array, which throws if enumerated. There is nothing to retrofit yet in that case:
+            // the two generation-time patches in this file already handle a brand new game's
+            // deposits directly, so simply skipping here is correct, not a fallback.
+            return;
+        }
 
         var additions = new List<IVirtualTerrainResource>();
         foreach (IVirtualTerrainResource resource in current) {

@@ -16,13 +16,14 @@ namespace GeologyReservoirEngineering;
 /// <summary>
 /// Mod entry point. Registers prototypes (products, machines, research) through
 /// <see cref="ProtoRegistrator"/>, and wires up the runtime deposit-recharge service through
-/// the standard <see cref="IMod"/> lifecycle. Harmony is used in three places: reassigning a
+/// the standard <see cref="IMod"/> lifecycle. Harmony is used in four places: reassigning a
 /// vanilla machine's toolbar category (reflection only, no method patch, see
-/// <see cref="Data.VanillaCategoryFixupData"/>); co-locating Natural Gas deposits with existing
-/// crude oil at map/feature generation time (two genuine method patches, see
-/// <see cref="Data.NaturalGasMapPatch"/>); and retrofitting Natural Gas into already-loaded
-/// saves whose map predates this mechanism (live-state reflection, also in
-/// <see cref="Data.NaturalGasMapPatch"/>).
+/// <see cref="Data.VanillaCategoryFixupData"/>); adding Fuel Gas and Natural Gas as cargo ship
+/// fuel options (reflection only, no method patch, see <see cref="Data.ShipFuelData"/>);
+/// co-locating Natural Gas deposits with existing crude oil at map/feature generation time (two
+/// genuine method patches, see <see cref="Data.NaturalGasMapPatch"/>); and retrofitting Natural
+/// Gas into already-loaded saves whose map predates this mechanism (live-state reflection, also
+/// in <see cref="Data.NaturalGasMapPatch"/>).
 /// </summary>
 public sealed class GeologyReservoirEngineeringMod : IMod {
 
@@ -54,6 +55,11 @@ public sealed class GeologyReservoirEngineeringMod : IMod {
         registrator.RegisterData<VanillaCategoryFixupData>();
         registrator.RegisterData<MachinesData>();
         registrator.RegisterData<ResearchData>();
+
+        // Registered after ResearchData: it looks up this mod's own "Natural gas extraction"
+        // research node by ID to use as a ship-fuel unlock condition, which must already exist
+        // in the database by the time this runs.
+        registrator.RegisterData<ShipFuelData>();
 
         // NaturalGasMapPatch reads this static reference when the patched map-generation
         // method actually runs, later, when a map is loaded - registered here, after
