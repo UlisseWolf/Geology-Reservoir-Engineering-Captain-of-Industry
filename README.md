@@ -465,6 +465,17 @@ recognized resource still has room. This is purely a display/auto-stop improveme
 `GeologyRegenManager` already iterated every resource at a pump's tile independently of what
 this panel reported.
 
+**Interface-typed fields on a saved entity must be marked `[DoNotSave]`, or saving throws.**
+`InjectionPump` stores `IVirtualResourceManager` as a field so it can query current deposit
+state on demand rather than only once at construction. The game's generic serializer cannot
+build a serializer for an interface-typed field at all - there is no way to know which concrete
+implementation to reconstruct - and raises `Failed to create generic serializer` for the whole
+entity type at save time if one is left unmarked. Since dependency injection supplies a fresh
+instance through the constructor on every construction anyway (whether newly built or restored
+from a save), the field doesn't need to be saved at all - `[DoNotSave]` tells the serializer to
+skip it, which is enough to fix the save error without changing how the field is used at
+runtime.
+
 **The injection pump family is three fully dedicated machines, each restricted to its own
 deposit type, rather than one shared pump with runtime restriction logic.** Water, oil, and
 Natural Gas each have their own injection pump, entity-level restricted to their own fixed set

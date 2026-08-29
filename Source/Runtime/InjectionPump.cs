@@ -13,6 +13,7 @@ using Mafi.Core.Prototypes;
 using Mafi.Core.Terrain;
 using Mafi.Core.Terrain.Generation;
 using Mafi.Core.Vehicles;
+using Mafi.Serialization;
 
 namespace GeologyReservoirEngineering.Runtime;
 
@@ -38,18 +39,23 @@ namespace GeologyReservoirEngineering.Runtime;
 /// which deposits actually get recharged - <c>GeologyRegenManager</c> already iterates every
 /// resource at a pump's tile independently of what this class reports for display.
 ///
-/// The entity stores no persisted fields of its own. <see cref="ProductToMine"/>,
-/// <see cref="CapacityOfMine"/>, and <see cref="QuantityLeftToMine"/> are recomputed on demand
-/// from <see cref="IVirtualResourceManager"/>, which is supplied fresh by dependency injection
-/// on every construction, whether the entity is newly built or restored from a save. As a
-/// result, this class relies entirely on the serialization already provided by its base
-/// <c>Machine</c> class.
+/// <c>m_virtualResourceManager</c> is stored as a field so <see cref="FindAllRechargeableResources"/>
+/// can query it fresh whenever the reserve panel or auto-stop logic needs current deposit
+/// state, rather than only once at construction. It is marked <see cref="DoNotSaveAttribute"/>:
+/// the game's generic serializer cannot handle interface-typed fields (there is no way to know
+/// which concrete implementation to reconstruct), and none is needed here anyway, since
+/// dependency injection supplies a fresh instance through the constructor every time this
+/// entity is constructed - whether newly built or restored from a save. Every other property on
+/// this class is recomputed on demand from that manager, so no other field is needed, and the
+/// rest of this class's persisted state relies entirely on the serialization already provided
+/// by its base <c>Machine</c> class.
 ///
 /// <see cref="IsEnabledNow"/> is overridden to disable the pump once its target deposit(s) reach
 /// full capacity, stopping input consumption once storage is full.
 /// </summary>
 public sealed class InjectionPump : Machine, IVirtualResourceMiningEntity {
 
+    [DoNotSave]
     private readonly IVirtualResourceManager m_virtualResourceManager;
 
     public InjectionPump(
