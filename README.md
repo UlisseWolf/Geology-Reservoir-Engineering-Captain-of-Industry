@@ -162,6 +162,26 @@ while Natural Gas represents the raw, unrefined gas as extracted from the ground
   the vanilla Oil Rig already uses on the World Map/exploration map — see
   [WorldGen++ compatibility](#worldgen-compatibility) below.
 
+### Cargo ship fuel
+
+Vanilla Fuel Gas and this mod's Natural Gas are both available as alternative cargo ship fuels,
+alongside the vanilla options (Diesel, Heavy Oil, Hydrogen), on every registered cargo ship
+tier. Fuel Gas consumes fuel at the same rate as Diesel and pollutes less (65% vs. Diesel's
+100%), reflecting that it's already refined and clean-burning. Natural Gas consumes 30% more and
+pollutes more (140%), since raw, untreated gas burns less efficiently — consistent with this
+mod's own gas-fired Boiler recipe, where Natural Gas combustion produces Exhaust rather than the
+cleaner byproduct Fuel Gas combustion produces elsewhere. Fuel Gas and Natural Gas are each
+other's only compatible fuel (interchangeable without a switching cost, the same way Diesel and
+Heavy Oil already are with each other) — not compatible with the liquid/hydrogen options,
+representing a distinct gas-burning engine mode. Each fuel option is locked behind an existing
+research node rather than a new, dedicated one: Fuel Gas behind the vanilla "Gas combustion"
+node (the same node that already unlocks the gas-fired Boiler and Fuel Gas steam generation),
+and Natural Gas behind this mod's own "Natural gas extraction" node — mirroring how the vanilla
+Hydrogen fuel entry itself locks behind a technology rather than the Hydrogen product. Neither
+fuel option introduces a new engine cost or ship model — both reuse the ship's existing engine
+cost and default graphics, since no dedicated 3D assets exist for a gas-fueled variant. See
+[How this mod uses Harmony](#how-this-mod-uses-harmony) for how this is implemented.
+
 ### Localization
 
 English, Italian, French, Spanish, German, and Portuguese, using a small JSON-based translation
@@ -169,7 +189,7 @@ loader with no external dependencies. See [Localization](#localization) below.
 
 ## How this mod uses Harmony
 
-Harmony is used in three independent ways.
+Harmony is used in four independent ways.
 
 **Reflection only, no method patch.** A machine's toolbar categories are set once, in
 `LayoutEntityProto.Gfx.Categories`, a get-only property assigned when the base game constructs
@@ -179,6 +199,18 @@ field by type, using Harmony's `AccessTools` reflection helpers, and overwriting
 already-constructed vanilla prototypes — the Groundwater Pump (into this mod's "Groundwater"
 subcategory) and the Oil Pump (from its default "Basic" subcategory of "Crude oil refining"
 into this mod's "Oil wells" subcategory).
+
+**Reflection only, no method patch, again.** `CargoShipProto.AvailableFuels` is a public but
+`readonly` field, set once when the base game constructs its cargo ship prototypes, before this
+mod runs. There is no supported API to add a fuel option afterward, so
+`Source/Data/ShipFuelData.cs` locates the field by name and overwrites it with the existing fuel
+list plus two new entries (Fuel Gas, Natural Gas) appended, on every registered
+`CargoShipProto` — the same technique as the toolbar category fixup above, applied to a
+different vanilla field. Each new entry is locked behind an existing research node (the vanilla
+"Gas combustion" node for Fuel Gas, this mod's own "Natural gas extraction" node for Natural
+Gas) via `FuelData.LockingProto`, which accepts any `Proto` — the vanilla Hydrogen fuel entry
+itself already locks behind a technology rather than a product, so no new, dedicated research
+node is needed for either.
 
 **Two genuine method patches**, because oil deposits reach newly-generated game content through
 two different code paths.
@@ -225,9 +257,17 @@ rather than to prototype data at registration time. It's the most invasive mecha
 mod: **back up your save before loading it with this version installed**, and treat it as the
 first thing to investigate if something looks wrong with deposits after an update.
 
-Because all three of these reach into internal implementation details rather than documented
+On a brand new game, mod initialization can run before the vanilla `VirtualResourceManager` has
+populated `m_virtualResources` for the freshly generated map yet - reading it in that state
+would be an uninitialized `ImmutableArray` wrapping a null backing array, which throws if
+enumerated. `RetrofitExistingSave` checks for this (`current.IsNotValid`) and returns
+immediately when it's the case, since there is nothing to retrofit on a brand new game anyway -
+the two generation-time patches above already handle it directly.
+
+Because all four of these reach into internal implementation details rather than documented
 APIs, they are more likely than the rest of the mod to break on a game update that changes how
-toolbar categories, map generation, or the resource manager's internal structure are represented.
+toolbar categories, cargo ship fuel data, map generation, or the resource manager's internal
+structure are represented.
 
 ## Requirements
 
@@ -279,6 +319,7 @@ Source/
     ProductsData.cs                   Geothermal deposit registration
     ToolbarCategoriesData.cs          Geothermal and Groundwater toolbar subcategories
     VanillaCategoryFixupData.cs       Reassigns vanilla machines' categories (Harmony, reflection only)
+    ShipFuelData.cs                    Adds Fuel Gas/Natural Gas as cargo ship fuel (Harmony, reflection only)
     NaturalGasMapPatch.cs             Co-locates Natural Gas with crude oil deposits (Harmony, method patch)
     WorldMapData.cs                   Natural Gas Rig on the World Map (no Harmony, no WorldGen++ dependency)
     MachinesData.cs                   Extraction wells and the three injection pumps
