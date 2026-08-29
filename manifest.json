@@ -11,7 +11,7 @@
   ],
   "incompatible_mods": [],
   "can_add_to_saved_game": true,
-  "can_remove_from_saved_game": true,
+  "can_remove_from_saved_game": false,
   "non_locking_dll_load": true,
   "min_game_version": "0.8.6",
   "primary_dlls": [
