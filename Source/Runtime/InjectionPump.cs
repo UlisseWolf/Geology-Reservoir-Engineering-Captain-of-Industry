@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Mafi;
 using Mafi.Collections.ImmutableCollections;
@@ -39,24 +40,56 @@ namespace GeologyReservoirEngineering.Runtime;
 /// which deposits actually get recharged - <c>GeologyRegenManager</c> already iterates every
 /// resource at a pump's tile independently of what this class reports for display.
 ///
-/// <c>m_virtualResourceManager</c> is stored as a field so <see cref="FindAllRechargeableResources"/>
-/// can query it fresh whenever the reserve panel or auto-stop logic needs current deposit
-/// state, rather than only once at construction. It is marked <see cref="DoNotSaveAttribute"/>:
-/// the game's generic serializer cannot handle interface-typed fields (there is no way to know
-/// which concrete implementation to reconstruct), and none is needed here anyway, since
-/// dependency injection supplies a fresh instance through the constructor every time this
-/// entity is constructed - whether newly built or restored from a save. Every other property on
-/// this class is recomputed on demand from that manager, so no other field is needed, and the
-/// rest of this class's persisted state relies entirely on the serialization already provided
-/// by its base <c>Machine</c> class.
+/// This entity stores no instance field of its own at all - in particular, no reference to
+/// <c>IVirtualResourceManager</c>. <see cref="FindAllRechargeableResources"/> reads
+/// <see cref="GeologyReservoirEngineeringMod.VirtualResourceManager"/> instead, a `static`
+/// field set once per game session in that mod's `Initialize` - a `static` field belongs to the
+/// type, not to any individual entity instance, so it is never part of an entity's own
+/// serialized state.
 ///
-/// <see cref="IsEnabledNow"/> is overridden to disable the pump once its target deposit(s) reach
-/// full capacity, stopping input consumption once storage is full.
+/// Having no extra fields is not, by itself, enough to make a sealed <c>Machine</c> subclass
+/// saveable. The game's save system does not serialize every entity type through one fully
+/// automatic path: concrete <c>Machine</c> subclasses each provide their own `public static
+/// void Serialize(TSelf value, BlobWriter writer)` / `public new static TSelf Deserialize(BlobReader
+/// reader)` pair, plus `SerializeData`/`DeserializeData` overrides - confirmed directly in the
+/// vanilla `WellPump` class, which has this exact same boilerplate despite itself having very
+/// few fields of its own. This is most likely produced by a source generator as part of the
+/// base game's own build (triggered by a `[GenerateSerializer]` attribute mentioned in that
+/// attribute's own documentation, requiring a `partial class` declaration to inject the
+/// generated half) - not something available to an externally-compiled mod assembly, so this
+/// class reproduces the same boilerplate by hand instead, calling only the base `Machine`
+/// implementation in both data methods, since it has nothing of its own to add.
 /// </summary>
 public sealed class InjectionPump : Machine, IVirtualResourceMiningEntity {
 
-    [DoNotSave]
-    private readonly IVirtualResourceManager m_virtualResourceManager;
+    private static readonly Action<object, BlobWriter> s_serializeDataDelayedAction;
+    private static readonly Action<object, BlobReader> s_deserializeDataDelayedAction;
+
+    static InjectionPump() {
+        s_serializeDataDelayedAction = (obj, writer) => ((InjectionPump)obj).SerializeData(writer);
+        s_deserializeDataDelayedAction = (obj, reader) => ((InjectionPump)obj).DeserializeData(reader);
+    }
+
+    public static void Serialize(InjectionPump value, BlobWriter writer) {
+        if (writer.TryStartClassSerialization(value)) {
+            writer.EnqueueDataSerialization(value, s_serializeDataDelayedAction);
+        }
+    }
+
+    public new static InjectionPump Deserialize(BlobReader reader) {
+        if (reader.TryStartClassDeserialization(out InjectionPump obj)) {
+            reader.EnqueueDataDeserialization(obj, s_deserializeDataDelayedAction);
+        }
+        return obj;
+    }
+
+    protected override void SerializeData(BlobWriter writer) {
+        base.SerializeData(writer);
+    }
+
+    protected override void DeserializeData(BlobReader reader) {
+        base.DeserializeData(reader);
+    }
 
     public InjectionPump(
         EntityId id,
@@ -64,14 +97,11 @@ public sealed class InjectionPump : Machine, IVirtualResourceMiningEntity {
         TileTransform transform,
         EntityContext context,
         VirtualBuffersMap buffersMap,
-        IVirtualResourceManager virtualResourceManager,
         UnlockedProtosDb unlockedProtosDb,
         IVehicleBuffersRegistry vehicleBuffersRegistry,
         IEntityMaintenanceProvidersFactory maintenanceProvidersFactory,
         IAnimationStateFactory animationStateFactory)
         : base(id, proto, transform, context, buffersMap, unlockedProtosDb, vehicleBuffersRegistry, maintenanceProvidersFactory, animationStateFactory) {
-
-        m_virtualResourceManager = virtualResourceManager;
     }
 
     /// <summary>
@@ -79,12 +109,20 @@ public sealed class InjectionPump : Machine, IVirtualResourceMiningEntity {
     /// position - restricted to <see cref="InjectionPumpProto.AllowedResourceIds"/> on this
     /// specific machine's prototype, so the water, oil, and natural gas injection pumps (see
     /// <c>MachinesData.cs</c>) each only ever see the deposit types they were registered for,
-    /// even though all three use this same entity class.
+    /// even though all three use this same entity class. Returns an empty list if
+    /// <see cref="GeologyReservoirEngineeringMod.VirtualResourceManager"/> hasn't been set yet
+    /// (before the first <c>Initialize</c> call of a session), rather than throwing.
     /// </summary>
     private List<IVirtualTerrainResource> FindAllRechargeableResources() {
-        ImmutableArray<Proto.ID> allowedIds = ((InjectionPumpProto)Prototype).AllowedResourceIds;
         var found = new List<IVirtualTerrainResource>();
-        foreach (IVirtualTerrainResource resource in m_virtualResourceManager.RetrieveAllResourcesAt(Position2f.Tile2i)) {
+
+        IVirtualResourceManager? virtualResourceManager = GeologyReservoirEngineeringMod.VirtualResourceManager;
+        if (virtualResourceManager == null) {
+            return found;
+        }
+
+        ImmutableArray<Proto.ID> allowedIds = ((InjectionPumpProto)Prototype).AllowedResourceIds;
+        foreach (IVirtualTerrainResource resource in virtualResourceManager.RetrieveAllResourcesAt(Position2f.Tile2i)) {
             if (allowedIds.Contains(allowedId => allowedId == resource.Product.Id)) {
                 found.Add(resource);
             }

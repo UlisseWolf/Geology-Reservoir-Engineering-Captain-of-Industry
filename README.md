@@ -25,13 +25,16 @@ Pump's toolbar category, which has no supported API and uses Harmony's reflectio
 ### Geothermal energy
 
 Three deposit tiers — High, Medium, and Low enthalpy — registered as `VirtualResourceProductProto`
-entries, each backed by an existing vanilla steam product:
+entries, each backed by an existing vanilla steam product for extraction purposes, but with its
+own distinct name, description, and color rather than the backing product's own — a deposit and
+the product it eventually yields are conceptually different things, and sharing the exact same
+name/color as three vanilla steam grades made the tiers hard to tell apart in resource lists:
 
-| Tier            | Product         |
-|-----------------|-----------------|
-| High enthalpy   | High-pressure steam |
-| Medium enthalpy | Low-pressure steam  |
-| Low enthalpy    | Depleted steam      |
+| Tier            | Backing product      | Color  |
+|-----------------|-----------------------|--------|
+| High enthalpy   | High-pressure steam   | Red    |
+| Medium enthalpy | Low-pressure steam    | Orange |
+| Low enthalpy    | Depleted steam        | Gold   |
 
 Each tier has a dedicated extraction well, built on the vanilla Groundwater Pump prefab and
 layout. All three wells are listed under a new "Geothermal" subcategory of the vanilla Power
@@ -113,7 +116,7 @@ therefore consumes a genuinely distinct product.
 | Hydraulic fracturing           | The oil injection pump + one recipe | Thermal desalination (vanilla) |
 | Thermal enhanced oil recovery  | The oil injection pump + two recipes | Super heated steam (vanilla) |
 | Acid stimulation               | The oil injection pump + one recipe | Sulfur processing (vanilla) |
-| Natural gas extraction         | The natural gas well + 4 recipes (treatment, Flare, Boiler, thermal gas recovery) | Hydrogen production (vanilla) |
+| Natural gas extraction         | The natural gas well + 4 recipes (treatment, Flare, Boiler, thermal gas recovery) + two electricity generators | Hydrogen production (vanilla) |
 | Underground gas storage        | The natural gas injection pump + one recipe | Natural gas extraction |
 
 ### Natural gas
@@ -182,6 +185,39 @@ fuel option introduces a new engine cost or ship model — both reuse the ship's
 cost and default graphics, since no dedicated 3D assets exist for a gas-fueled variant. See
 [How this mod uses Harmony](#how-this-mod-uses-harmony) for how this is implemented.
 
+### Power generation
+
+Two electricity generators, one burning vanilla Fuel Gas and one burning this mod's Natural
+Gas, both reusing the vanilla Diesel Generator II's own prototype type
+(`ElectricityGeneratorFromProductProto`), layout, construction cost, 5000 kW output, and 3D
+model unmodified — visually indistinguishable in-game from the vanilla Diesel Generator II they're
+built from. This prototype type takes exactly one fixed input product per instance (unlike a
+`RecipeProtoBuilder`-bound machine, which can offer several recipes on one building), so Fuel
+Gas and Natural Gas need two separate machines rather than one offering both as alternatives.
+Fuel Gas matches the vanilla Diesel Generator II's own input rate one-to-one; Natural Gas
+consumes 30% more and produces 30% more Exhaust for the same output — the same pollutant the
+vanilla Diesel Generator II itself produces — following this mod's established pattern for the
+difference between treated Fuel Gas and raw Natural Gas (see also the gas-fired Boiler recipe
+and the cargo ship fuel entries above). Both generators are unlocked together by the "Natural
+gas extraction" research node, alongside everything else that node already unlocks, rather than
+a separate dedicated node — both generators need raw Natural Gas to be meaningful (one burns it
+directly, the other burns Fuel Gas refined from it), so tying them to gas extraction itself
+keeps the dependency in one place.
+
+Both generators are listed under a new "Electric generators" subcategory of the vanilla "Power
+production" toolbar menu, alongside the vanilla "General" and "Nuclear" subcategories and this
+mod's own "Geothermal" subcategory. The vanilla Diesel Generator (both tiers) is also reassigned
+there from its default "General" subcategory, so every combustion-fueled electricity generator
+lives together in one place — see
+[How this mod uses Harmony](#how-this-mod-uses-harmony).
+
+A recolored variant of the Diesel Generator II's texture exists as a source asset in this
+project (`Assets/Geothermal/NaturalGasEngine-512-albedo.png`), but using it in-game would
+require building and shipping a Unity AssetBundle containing a new prefab/material that
+references it — the same asset pipeline already used for the Natural Gas product icon (see
+[Custom assets](#custom-assets)) — which hasn't been done for this texture yet, so both
+generators currently look identical to the vanilla machine they're built from.
+
 ### Localization
 
 English, Italian, French, Spanish, German, and Portuguese, using a small JSON-based translation
@@ -197,8 +233,14 @@ its prototypes — before this mod runs. There is no supported API to reassign i
 `Source/Data/VanillaCategoryFixupData.cs` works around this by locating the property's backing
 field by type, using Harmony's `AccessTools` reflection helpers, and overwriting it directly on
 already-constructed vanilla prototypes — the Groundwater Pump (into this mod's "Groundwater"
-subcategory) and the Oil Pump (from its default "Basic" subcategory of "Crude oil refining"
-into this mod's "Oil wells" subcategory).
+subcategory), the Oil Pump (from its default "Basic" subcategory of "Crude oil refining" into
+this mod's "Oil wells" subcategory), and the Diesel Generator, both tiers (from its default
+"General" subcategory of "Power production" into this mod's "Electric generators" subcategory).
+The Diesel Generator is looked up as `LayoutEntityProto`, not `MachineProto`: it's registered as
+`ElectricityGeneratorFromProductProto`, a sibling type that only shares `LayoutEntityProto` as a
+common ancestor rather than being a `MachineProto` itself, so looking it up as the narrower
+`MachineProto` type would throw a cast exception - the same distinction the research data (below)
+has to make for the same two generator machines.
 
 **Reflection only, no method patch, again.** `CargoShipProto.AvailableFuels` is a public but
 `readonly` field, set once when the base game constructs its cargo ship prototypes, before this
@@ -323,6 +365,7 @@ Source/
     NaturalGasMapPatch.cs             Co-locates Natural Gas with crude oil deposits (Harmony, method patch)
     WorldMapData.cs                   Natural Gas Rig on the World Map (no Harmony, no WorldGen++ dependency)
     MachinesData.cs                   Extraction wells and the three injection pumps
+    PowerGeneratorsData.cs            Fuel Gas / Natural Gas electricity generators (no Harmony)
     ResearchData.cs                   Research tree nodes
   Runtime/
     GeologyRegenManager.cs            Deposit recharge logic
@@ -465,16 +508,30 @@ recognized resource still has room. This is purely a display/auto-stop improveme
 `GeologyRegenManager` already iterated every resource at a pump's tile independently of what
 this panel reported.
 
-**Interface-typed fields on a saved entity must be marked `[DoNotSave]`, or saving throws.**
-`InjectionPump` stores `IVirtualResourceManager` as a field so it can query current deposit
-state on demand rather than only once at construction. The game's generic serializer cannot
-build a serializer for an interface-typed field at all - there is no way to know which concrete
-implementation to reconstruct - and raises `Failed to create generic serializer` for the whole
-entity type at save time if one is left unmarked. Since dependency injection supplies a fresh
-instance through the constructor on every construction anyway (whether newly built or restored
-from a save), the field doesn't need to be saved at all - `[DoNotSave]` tells the serializer to
-skip it, which is enough to fix the save error without changing how the field is used at
-runtime.
+**A saved entity cannot store an interface-typed instance field, and a sealed `Machine`
+subclass also needs its own hand-written serialization boilerplate - two separate requirements
+behind the same `Failed to create generic serializer for 'InjectionPump'` error.**
+`InjectionPump` needs a live `IVirtualResourceManager` reference to query current deposit state
+on demand, not just once at construction, but no entity in the base game stores a
+manager-style interface as an instance field - the vanilla `WellPump`, for example, only uses
+its own `IVirtualResourceManager` constructor parameter to compute a concrete result once, and
+never keeps the interface reference itself. `InjectionPump` follows the same rule: it has no
+instance field of this kind at all, and instead reads
+`GeologyReservoirEngineeringMod.VirtualResourceManager`, a `static` field set once per game
+session in that mod's `Initialize` - a `static` field belongs to the type, not to any individual
+entity instance, so it is never part of an entity's own serialized state.
+
+That alone isn't sufficient, though: the game's save system does not serialize every entity
+type through one fully automatic reflection path. Concrete `Machine` subclasses each provide
+their own `public static void Serialize(TSelf value, BlobWriter writer)` /
+`public new static TSelf Deserialize(BlobReader reader)` pair, plus `SerializeData`/
+`DeserializeData` overrides - confirmed directly in the vanilla `WellPump` class, which has this
+exact boilerplate despite having very few fields of its own. This is most likely produced by a
+source generator as part of the base game's own build (triggered by a `[GenerateSerializer]`
+attribute, which requires a `partial class` declaration to inject the generated half) - not
+something available to an externally-compiled mod assembly. `InjectionPump` reproduces the same
+boilerplate by hand, calling only the base `Machine` implementation in both data methods, since
+it has nothing of its own left to serialize.
 
 **The injection pump family is three fully dedicated machines, each restricted to its own
 deposit type, rather than one shared pump with runtime restriction logic.** Water, oil, and
@@ -501,6 +558,17 @@ prototype IDs it exposes are defined in `Source/ModIds.cs`.
 Because `VanillaCategoryFixupData` reassigns the vanilla Groundwater Pump's toolbar category
 directly, another mod that reassigns the same category on the same prototype may produce a
 result that depends on mod load order.
+
+### Mod load order and Harmony
+
+`manifest.json`'s `primary_dlls` lists `0Harmony.dll` before `GeologyReservoirEngineering.dll`.
+This mod bundles its own copy of `0Harmony.dll` (see `Libs/`, copied to the mod's root folder on
+build/deploy) since Harmony isn't part of the base game install. Mods appear to load in
+alphabetical order by default, so if another installed mod also bundles its own `0Harmony.dll`
+and happens to sort after this one, that mod's own copy could end up initializing second,
+depending on exactly how the game resolves duplicate assembly loads across mods - listing
+`0Harmony.dll` first in `primary_dlls` makes this mod's own Harmony instance load deterministically
+before its main DLL runs, regardless of overall mod load order.
 
 ### WorldGen++ compatibility
 

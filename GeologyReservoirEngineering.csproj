@@ -78,6 +78,9 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(COI_MODS)\$(TargetName)\" />
     <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(COI_MODS)\$(TargetName)\" Condition="'$(Configuration)' == 'Debug' AND Exists('$(TargetDir)$(TargetName).pdb')" />
     <Copy SourceFiles="$(ProjectDir)Libs\0Harmony.dll" DestinationFolder="$(COI_MODS)\$(TargetName)\" />
+    <!-- Copied to the mod root (not just Libs\, which only matters for the build-time HintPath
+         reference above) because manifest.json's primary_dlls lists "0Harmony.dll" without a
+         path prefix - see the "Mod load order and Harmony" note in the README. -->
     <ItemGroup>
       <_DeployedTranslations Include="$(ProjectDir)Translations\**\*" />
       <_DeployedTranslationsDest Include="@(_DeployedTranslations->Replace('$(ProjectDir)Translations\', '$(COI_MODS)\$(TargetName)\Translations\'))" />

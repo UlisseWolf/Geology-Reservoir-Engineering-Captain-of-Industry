@@ -10,17 +10,28 @@ namespace GeologyReservoirEngineering.Data;
 /// Registers the three geothermal deposit tiers as <see cref="VirtualResourceProductProto"/>,
 /// following the same pattern the base game uses for VirtualCrudeOil and Groundwater
 /// (<c>Mafi.Base.Prototypes.Machines.WellPumpsData</c>). Each tier is backed by an existing
-/// vanilla steam product:
+/// vanilla steam product for extraction purposes, but has its own distinct name/description
+/// rather than reusing that product's own vanilla strings - a deposit and the product it
+/// eventually yields are conceptually different things, and sharing the exact same displayed
+/// name made the three tiers hard to tell apart in resource lists (they all also inherited that
+/// steam product's own near-white/grey UI color for the same reason, addressed below):
 ///
-/// | Tier            | Product               |
+/// | Tier            | Backing product        |
 /// |-----------------|------------------------|
-/// | High enthalpy   | High-pressure steam   |
-/// | Medium enthalpy | Low-pressure steam    |
-/// | Low enthalpy    | Depleted steam        |
+/// | High enthalpy   | High-pressure steam    |
+/// | Medium enthalpy | Low-pressure steam     |
+/// | Low enthalpy    | Depleted steam         |
 ///
 /// This mirrors real-world geothermal classification: high-enthalpy reservoirs are hot enough
 /// to flash directly into high-pressure steam, medium-enthalpy reservoirs yield lower-pressure
 /// steam, and low-enthalpy reservoirs only produce a depleted steam quality.
+///
+/// <c>VirtualResourceProductProto.Gfx.ResourcesVizColor</c> (the field this class sets via each
+/// deposit's <c>Gfx</c> constructor argument) is a distinct color specific to the deposit
+/// itself, not inherited from the backing steam product either. The three tiers use a red →
+/// orange → gold gradient (hottest to coolest), clearly distinct from each other and from any
+/// vanilla resource's own color, rather than three similar pale tones that were hard to
+/// distinguish in the resource list/map overlay.
 ///
 /// Because these are registered as standard <see cref="VirtualResourceProductProto"/> entries,
 /// they are automatically available in the in-game map editor's resource-feature list, in the
@@ -37,24 +48,33 @@ internal class ProductsData : IModData {
 
         db.Add(new VirtualResourceProductProto(
             ModIds.VirtualResources.GeothermalHighEnthalpy,
-            steamHi.Strings,
+            Proto.CreateStr(
+                ModIds.VirtualResources.GeothermalHighEnthalpy,
+                ModTranslation.Get("virtual-resource.GeothermalHighEnthalpy.name", "Geothermal reservoir (high enthalpy)"),
+                ModTranslation.Get("virtual-resource.GeothermalHighEnthalpy.description", "A hot geothermal reservoir, hot enough to flash directly into high-pressure steam when tapped.")),
             steamHi,
             isResourceFinal: false,
-            new VirtualResourceProductProto.Gfx(11821568, 6.0.TilesThick())));
+            new VirtualResourceProductProto.Gfx(13379614, 6.0.TilesThick())));
 
         db.Add(new VirtualResourceProductProto(
             ModIds.VirtualResources.GeothermalMediumEnthalpy,
-            steamLo.Strings,
+            Proto.CreateStr(
+                ModIds.VirtualResources.GeothermalMediumEnthalpy,
+                ModTranslation.Get("virtual-resource.GeothermalMediumEnthalpy.name", "Geothermal reservoir (medium enthalpy)"),
+                ModTranslation.Get("virtual-resource.GeothermalMediumEnthalpy.description", "A moderately hot geothermal reservoir, yielding lower-pressure steam when tapped.")),
             steamLo,
             isResourceFinal: false,
-            new VirtualResourceProductProto.Gfx(14589696, 8.0.TilesThick())));
+            new VirtualResourceProductProto.Gfx(15104532, 8.0.TilesThick())));
 
         db.Add(new VirtualResourceProductProto(
             ModIds.VirtualResources.GeothermalLowEnthalpy,
-            steamDepleted.Strings,
+            Proto.CreateStr(
+                ModIds.VirtualResources.GeothermalLowEnthalpy,
+                ModTranslation.Get("virtual-resource.GeothermalLowEnthalpy.name", "Geothermal reservoir (low enthalpy)"),
+                ModTranslation.Get("virtual-resource.GeothermalLowEnthalpy.description", "A cooler geothermal reservoir, only yielding a depleted steam quality when tapped.")),
             steamDepleted,
             isResourceFinal: false,
-            new VirtualResourceProductProto.Gfx(9410221, 10.0.TilesThick())));
+            new VirtualResourceProductProto.Gfx(15121448, 10.0.TilesThick())));
 
         registerNaturalGas(registrator);
     }
