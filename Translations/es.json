@@ -24,7 +24,6 @@
   "build-machine.NaturalGasInjectionPump.description": "Inyecta gas combustible ya tratado en un yacimiento de Gas Natural para almacenamiento subterráneo. Solo funciona en un yacimiento de Gas Natural - constrúyela dentro del radio del yacimiento que debe abastecer.",
   "build-machine.WaterInjectionPump.name": "Bomba de inyección de agua",
   "build-machine.WaterInjectionPump.description": "Inyecta agua en el subsuelo, recargando con el tiempo cualquier yacimiento que se encuentre debajo - un yacimiento geotérmico o un acuífero. Constrúyela dentro del radio del yacimiento que debe abastecer.",
-  "build-machine.WaterInjectionPump.reserve-description": "Estado del yacimiento subterráneo que esta bomba está recargando.",
   "build-machine.OilInjectionPump.name": "Bomba de inyección de petróleo",
   "build-machine.OilInjectionPump.description": "Inyecta CO2, agua de mar o vapor en un yacimiento de petróleo para la recuperación mejorada, la fracturación hidráulica o la recuperación térmica mejorada. Solo funciona en un yacimiento de petróleo - constrúyela dentro del radio del yacimiento que debe abastecer.",
   "build-machine.InjectionPump.reserve-description": "Estado del yacimiento subterráneo que esta bomba está recargando.",
@@ -36,5 +35,16 @@
   "world.NaturalGasRig.name": "Plataforma de gas natural",
   "world.NaturalGasRig.description": "Este sitio proporciona gas natural cuando se le asignan trabajadores.",
   "research.AcidStimulation.name": "Acidificación",
-  "research.AcidStimulation.description": "Desbloquea la inyección de ácido en la bomba de inyección de petróleo, recuperando petróleo adicional de un yacimiento de petróleo existente."
+  "research.AcidStimulation.description": "Desbloquea la inyección de ácido en la bomba de inyección de petróleo, recuperando petróleo adicional de un yacimiento de petróleo existente.",
+  "build-machine.GasGenerator.name": "Generador de gas",
+  "build-machine.GasGenerator.description": "Quema gas combustible para producir electricidad.",
+  "build-machine.NaturalGasGenerator.name": "Generador de gas natural",
+  "build-machine.NaturalGasGenerator.description": "Quema Gas Natural crudo para producir electricidad, sin tratarlo antes en gas combustible.",
+  "virtual-resource.GeothermalHighEnthalpy.name": "Yacimiento geotérmico (alta entalpía)",
+  "virtual-resource.GeothermalHighEnthalpy.description": "Un yacimiento geotérmico caliente, lo bastante como para vaporizarse directamente en vapor de alta presión al explotarlo.",
+  "virtual-resource.GeothermalMediumEnthalpy.name": "Yacimiento geotérmico (media entalpía)",
+  "virtual-resource.GeothermalMediumEnthalpy.description": "Un yacimiento geotérmico moderadamente caliente, que produce vapor de baja presión al explotarlo.",
+  "virtual-resource.GeothermalLowEnthalpy.name": "Yacimiento geotérmico (baja entalpía)",
+  "virtual-resource.GeothermalLowEnthalpy.description": "Un yacimiento geotérmico más frío, que solo produce vapor agotado al explotarlo.",
+  "toolbar-category.ElectricGenerators.name": "Generadores eléctricos"
 }

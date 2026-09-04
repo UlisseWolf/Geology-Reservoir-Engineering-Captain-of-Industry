@@ -1,9 +1,9 @@
 {
   "id": "GeologyReservoirEngineering",
   "display_name": "Geology & Reservoir Engineering",
-  "version": "1.0.4",
+  "version": "1.3.1",
   "description_short": "Geology & Reservoir Engineering is a mod that adds geothermal energy, underground water/gas injection, and enhanced oil recovery to Captain of Industry.",
-  "description_long": "Geology & Reservoir Engineering adds subsurface resource extraction and injection systems built around three dedicated pumps.\n\nA water injection pump recharges geothermal reservoirs (three enthalpy tiers, each with its own extraction well) and the vanilla groundwater aquifer, each at its own distinct pace. An oil injection pump offers enhanced oil recovery, hydraulic fracturing, thermal EOR (steam injection), and acid stimulation, all directly on the vanilla crude oil deposit.\n\nA new Natural Gas deposit - extracted by its own well, co-located with existing crude oil as associated gas - can be treated into vanilla Fuel Gas at the Chemical Plant, burned directly in a Flare or gas-fired Boiler, or banked underground via a third dedicated injection pump offering both storage and thermal recovery. A Natural Gas Rig is also available on the World Map/exploration map, using the same core game API as the vanilla Oil Rig. Cargo ships can run on Fuel Gas or Natural Gas as well, alongside Diesel, Heavy Oil, and Hydrogen.\n\nDesigned as a foundation other mods can build on: prototype IDs are exposed publicly, and every deposit type is freely placeable in the map editor.",
+  "description_long": "Geology & Reservoir Engineering adds subsurface resource extraction and injection systems built around three dedicated pumps.\n\nA water injection pump recharges geothermal reservoirs (three enthalpy tiers, each with its own extraction well) and the vanilla groundwater aquifer, each at its own distinct pace. An oil injection pump offers enhanced oil recovery, hydraulic fracturing, thermal EOR (steam injection), and acid stimulation, all directly on the vanilla crude oil deposit.\n\nA new Natural Gas deposit - extracted by its own well, co-located with existing crude oil as associated gas - can be treated into vanilla Fuel Gas at the Chemical Plant, burned directly in a Flare or gas-fired Boiler, or banked underground via a third dedicated injection pump offering both storage and thermal recovery. A Natural Gas Rig is also available on the World Map/exploration map, using the same core game API as the vanilla Oil Rig. Cargo ships can run on Fuel Gas or Natural Gas as well, alongside Diesel, Heavy Oil, and Hydrogen.\n\nDesigned as a foundation other mods can build on: prototype IDs are exposed publicly, and every deposit type is freely placeable in the map editor. Two electricity generators - one burning vanilla Fuel Gas, one burning Natural Gas - reuse the vanilla Diesel Generator II's model and stats. The three geothermal deposit tiers now have their own distinct names and colors (red/orange/gold) instead of reusing the backing vanilla steam product's own near-identical pale name and color. Both gas generators now produce Exhaust instead of Polluted Air, matching the vanilla Diesel Generator II they're based on; a new 'Electric generators' toolbar subcategory now holds both of them alongside the vanilla Diesel Generator (both tiers), reassigned there from its default category.",
   "authors": "Ulisse Wolf",
   "mod_dependencies": [],
   "optional_mod_dependencies": [
@@ -15,6 +15,7 @@
   "non_locking_dll_load": true,
   "min_game_version": "0.8.6",
   "primary_dlls": [
+    "0Harmony.dll",
     "GeologyReservoirEngineering.dll"
   ],
   "primary_mod_class_name": "GeologyReservoirEngineering.GeologyReservoirEngineeringMod"

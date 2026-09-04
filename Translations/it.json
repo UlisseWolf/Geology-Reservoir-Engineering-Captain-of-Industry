@@ -24,7 +24,6 @@
   "build-machine.NaturalGasInjectionPump.description": "Inietta gas combustibile già trattato in un giacimento di Gas Naturale per lo stoccaggio sotterraneo. Funziona solo su un giacimento di Gas Naturale - costruiscila entro il raggio del giacimento che deve supportare.",
   "build-machine.WaterInjectionPump.name": "Pompa di iniezione dell'acqua",
   "build-machine.WaterInjectionPump.description": "Inietta acqua nel sottosuolo, ricaricando nel tempo qualunque giacimento si trovi sotto di essa - un bacino geotermico o una falda acquifera. Costruiscila entro il raggio del giacimento che deve supportare.",
-  "build-machine.WaterInjectionPump.reserve-description": "Stato del bacino sotterraneo che questa pompa sta ricaricando.",
   "build-machine.OilInjectionPump.name": "Pompa di iniezione del petrolio",
   "build-machine.OilInjectionPump.description": "Inietta CO2, acqua marina o vapore in un giacimento di petrolio per il recupero avanzato, la fratturazione idraulica o il recupero termico avanzato. Funziona solo su un giacimento di petrolio - costruiscila entro il raggio del giacimento che deve supportare.",
   "build-machine.InjectionPump.reserve-description": "Stato del bacino sotterraneo che questa pompa sta ricaricando.",
@@ -36,5 +35,16 @@
   "world.NaturalGasRig.name": "Piattaforma di gas naturale",
   "world.NaturalGasRig.description": "Questo sito fornisce gas naturale quando gli vengono assegnati dei lavoratori.",
   "research.AcidStimulation.name": "Acidizzazione",
-  "research.AcidStimulation.description": "Sblocca l'iniezione di acido sulla pompa di iniezione del petrolio, recuperando petrolio aggiuntivo da un giacimento di petrolio già esistente."
+  "research.AcidStimulation.description": "Sblocca l'iniezione di acido sulla pompa di iniezione del petrolio, recuperando petrolio aggiuntivo da un giacimento di petrolio già esistente.",
+  "build-machine.GasGenerator.name": "Generatore a gas",
+  "build-machine.GasGenerator.description": "Brucia Fuel Gas per produrre elettricità.",
+  "build-machine.NaturalGasGenerator.name": "Generatore a gas naturale",
+  "build-machine.NaturalGasGenerator.description": "Brucia Gas Naturale grezzo per produrre elettricità, senza trattarlo prima in Fuel Gas.",
+  "virtual-resource.GeothermalHighEnthalpy.name": "Bacino geotermico (alta entalpia)",
+  "virtual-resource.GeothermalHighEnthalpy.description": "Un bacino geotermico caldo, abbastanza da vaporizzare direttamente in vapore ad alta pressione una volta sfruttato.",
+  "virtual-resource.GeothermalMediumEnthalpy.name": "Bacino geotermico (media entalpia)",
+  "virtual-resource.GeothermalMediumEnthalpy.description": "Un bacino geotermico moderatamente caldo, che produce vapore a bassa pressione una volta sfruttato.",
+  "virtual-resource.GeothermalLowEnthalpy.name": "Bacino geotermico (bassa entalpia)",
+  "virtual-resource.GeothermalLowEnthalpy.description": "Un bacino geotermico più freddo, che produce solo vapore esausto una volta sfruttato.",
+  "toolbar-category.ElectricGenerators.name": "Generatori elettrici"
 }

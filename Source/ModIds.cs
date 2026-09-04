@@ -84,6 +84,29 @@ public static class ModIds {
         /// <see cref="OilInjectionPump"/>.
         /// </summary>
         public static readonly MachineProto.ID NaturalGasInjectionPump = new("NaturalGasInjectionPump");
+
+        /// <summary>
+        /// Electricity generator burning vanilla Fuel Gas, reusing the vanilla
+        /// <c>ElectricityGeneratorFromProductProto</c>/<c>ElectricityGeneratorFromProduct</c>
+        /// pair the vanilla Diesel Generator itself uses - a fully public, ready-made machine
+        /// type, not something this mod defines. A generator can only ever burn one fixed input
+        /// product (baked into its own prototype at registration, unlike a recipe-bindable
+        /// machine), so Fuel Gas and Natural Gas each need their own separate machine rather
+        /// than one machine offering both as alternatives - see
+        /// <see cref="NaturalGasGenerator"/>.
+        /// </summary>
+        public static readonly MachineProto.ID GasGenerator = new("GasGenerator");
+
+        /// <summary>
+        /// Electricity generator burning raw Natural Gas directly, without first being treated
+        /// into vanilla Fuel Gas - the generator counterpart to
+        /// <c>ModIds.Recipes.NaturalGasSteamGeneration</c> on the vanilla gas-fired Boiler.
+        /// Consumes more fuel and produces more Polluted Air than <see cref="GasGenerator"/> for
+        /// the same electricity output, consistent with this mod's established pattern of
+        /// modeling raw, untreated gas combustion as less efficient and dirtier than already-
+        /// treated Fuel Gas (see also the Boiler recipe and the cargo ship fuel entries).
+        /// </summary>
+        public static readonly MachineProto.ID NaturalGasGenerator = new("NaturalGasGenerator");
     }
 
     public static class Recipes {
@@ -182,6 +205,17 @@ public static class ModIds {
         /// since it recharges both geothermal and groundwater deposits.
         /// </summary>
         public static readonly ToolbarCategoryProto.ID Geothermal = new("geothermalCategory");
+
+        /// <summary>
+        /// A subcategory of the vanilla "Power production" toolbar menu, sibling to
+        /// <see cref="Geothermal"/> and the vanilla "General"/"Nuclear" subcategories. Holds
+        /// this mod's Fuel Gas and Natural Gas generators, plus the vanilla Diesel Generator
+        /// (both tiers, reassigned here from its default "General" subcategory - see
+        /// <see cref="Data.VanillaCategoryFixupData"/>) - every combustion-fueled electricity
+        /// generator lives together here, rather than the gas-fueled ones sitting apart from
+        /// the vanilla diesel ones they're modeled on.
+        /// </summary>
+        public static readonly ToolbarCategoryProto.ID ElectricGenerators = new("electricGeneratorsCategory");
 
         /// <summary>
         /// A subcategory of the vanilla "Water" toolbar menu. Holds the water injection pump.

@@ -24,7 +24,6 @@
   "build-machine.NaturalGasInjectionPump.description": "Injects treated Fuel Gas into a Natural Gas deposit for underground storage. Only works on a Natural Gas deposit - build within range of the deposit it should support.",
   "build-machine.WaterInjectionPump.name": "Water injection pump",
   "build-machine.WaterInjectionPump.description": "Injects water underground, recharging whatever deposit is beneath it over time - a geothermal reservoir or a groundwater aquifer. Build within range of the deposit it should support.",
-  "build-machine.WaterInjectionPump.reserve-description": "Status of the underground reservoir this pump is recharging.",
   "build-machine.OilInjectionPump.name": "Oil injection pump",
   "build-machine.OilInjectionPump.description": "Injects CO2, seawater, or steam into a crude oil deposit for enhanced oil recovery, hydraulic fracturing, or thermal EOR. Only works on a crude oil deposit - build within range of the deposit it should support.",
   "build-machine.InjectionPump.reserve-description": "Status of the underground reservoir this pump is recharging.",
@@ -36,5 +35,16 @@
   "world.NaturalGasRig.name": "Natural gas rig",
   "world.NaturalGasRig.description": "This station provides natural gas when assigned with workers.",
   "research.AcidStimulation.name": "Acid stimulation",
-  "research.AcidStimulation.description": "Unlocks acid injection on the oil injection pump, recovering additional oil from an existing crude oil deposit."
+  "research.AcidStimulation.description": "Unlocks acid injection on the oil injection pump, recovering additional oil from an existing crude oil deposit.",
+  "build-machine.GasGenerator.name": "Gas generator",
+  "build-machine.GasGenerator.description": "Burns Fuel Gas to create electricity.",
+  "build-machine.NaturalGasGenerator.name": "Natural gas generator",
+  "build-machine.NaturalGasGenerator.description": "Burns raw Natural Gas to create electricity, without treating it into Fuel Gas first.",
+  "virtual-resource.GeothermalHighEnthalpy.name": "Geothermal reservoir (high enthalpy)",
+  "virtual-resource.GeothermalHighEnthalpy.description": "A hot geothermal reservoir, hot enough to flash directly into high-pressure steam when tapped.",
+  "virtual-resource.GeothermalMediumEnthalpy.name": "Geothermal reservoir (medium enthalpy)",
+  "virtual-resource.GeothermalMediumEnthalpy.description": "A moderately hot geothermal reservoir, yielding lower-pressure steam when tapped.",
+  "virtual-resource.GeothermalLowEnthalpy.name": "Geothermal reservoir (low enthalpy)",
+  "virtual-resource.GeothermalLowEnthalpy.description": "A cooler geothermal reservoir, only yielding a depleted steam quality when tapped.",
+  "toolbar-category.ElectricGenerators.name": "Electric generators"
 }

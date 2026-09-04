@@ -38,6 +38,15 @@ public sealed class GeologyReservoirEngineeringMod : IMod {
     private GeologyRegenManager? m_regenManager;
     private readonly Harmony m_harmony = new("com.geology-reservoir-engineering.mod");
 
+    /// <summary>
+    /// Set once per game session in <see cref="Initialize"/>, read by
+    /// <see cref="InjectionPump"/> to query current deposit state on demand. A static field
+    /// belongs to the type, not to any individual entity instance, so it is never part of an
+    /// entity's own serialized state - unlike an instance field of this same interface type,
+    /// which the game's generic serializer cannot build a serializer for at all.
+    /// </summary>
+    internal static IVirtualResourceManager? VirtualResourceManager;
+
     public GeologyReservoirEngineeringMod(ModManifest manifest) {
         Manifest = manifest;
         JsonConfig = new(this);
@@ -54,6 +63,7 @@ public sealed class GeologyReservoirEngineeringMod : IMod {
         registrator.RegisterData<ToolbarCategoriesData>();
         registrator.RegisterData<VanillaCategoryFixupData>();
         registrator.RegisterData<MachinesData>();
+        registrator.RegisterData<PowerGeneratorsData>();
         registrator.RegisterData<ResearchData>();
 
         // Registered after ResearchData: it looks up this mod's own "Natural gas extraction"
@@ -83,6 +93,7 @@ public sealed class GeologyReservoirEngineeringMod : IMod {
         IVirtualResourceManager virtualResourceManager = resolver.Resolve<IVirtualResourceManager>();
         ISimLoopEvents simLoopEvents = resolver.Resolve<ISimLoopEvents>();
 
+        VirtualResourceManager = virtualResourceManager;
         m_regenManager = new GeologyRegenManager(entitiesManager, virtualResourceManager, simLoopEvents);
 
         NaturalGasMapPatch.RetrofitExistingSave(virtualResourceManager);

@@ -57,7 +57,11 @@ namespace GeologyReservoirEngineering.Data;
 /// generation recipe, and thermal enhanced gas recovery (Low steam injection on the natural gas
 /// injection pump) - all bundled together rather than split into separate nodes, since the
 /// well alone produces raw gas with nowhere to go and every consuming recipe needs the well to
-/// have something to consume. The thermal recovery recipe's own machine (the natural gas
+/// have something to consume. Also unlocks the two gas-fueled electricity generators (see
+/// <c>PowerGeneratorsData.cs</c>) together with everything else here, rather than gating them
+/// behind a separate node - both need raw Natural Gas to be meaningful (one burns it directly,
+/// the other burns Fuel Gas refined from it), so tying them to gas extraction itself keeps the
+/// dependency in one place. The thermal recovery recipe's own machine (the natural gas
 /// injection pump) isn't unlocked here - Underground gas storage below does that - but since
 /// that node depends on this one, the recipe is never usable before its machine exists.
 /// Depends on the vanilla "Hydrogen production" node (cost 72), keeping the dependency
@@ -172,14 +176,28 @@ internal class ResearchData : IResearchNodesData, IModData {
         // well to have something to consume. The thermal recovery recipe's own machine (the
         // natural gas injection pump) isn't unlocked here - "Underground gas storage" below
         // does that - but since that node depends on this one, the recipe is never usable before
-        // its machine exists. Depends on "Hydrogen production" rather than "Basic diesel": both
-        // raw natural gas and hydrogen reforming are gas-handling technologies, and this keeps
-        // the dependency in that part of the tree instead of the oil-extraction branch.
+        // its machine exists. Also unlocks the two gas-fueled electricity generators (see
+        // PowerGeneratorsData.cs) together with everything else here, rather than gating them
+        // behind a separate node - both need raw Natural Gas to be meaningful (one burns it
+        // directly, the other burns Fuel Gas refined from it), so tying them to gas extraction
+        // itself keeps the dependency in one place instead of introducing a second node whose
+        // only other purpose would be to also depend on this one. The generators use
+        // AddLayoutEntityToUnlock rather than AddMachineToUnlock: they're registered as
+        // ElectricityGeneratorFromProductProto, not MachineProto, and AddMachineToUnlock's
+        // recipe-unlocking logic requires a genuine MachineProto, throwing a cast exception for
+        // any other prototype type - AddLayoutEntityToUnlock only requires the common
+        // LayoutEntityProto ancestor both types share, matching how the vanilla Diesel
+        // Generator (also an ElectricityGeneratorFromProductProto) is itself unlocked by
+        // research. Depends on "Hydrogen production" rather than "Basic diesel": both raw
+        // natural gas and hydrogen reforming are gas-handling technologies, and this keeps the
+        // dependency in that part of the tree instead of the oil-extraction branch.
         registrator.ResearchNodeProtoBuilder
             .Start(ModTranslation.Get("research.NaturalGasExtraction.name", "Natural gas extraction"), ModIds.ResearchNodes.NaturalGasExtraction, costMonths: 85)
             .AddParents(hydrogenProduction)
             .SetGridPosition(new Vector2i(102, 3))
             .AddMachineToUnlock(ModIds.Machines.NaturalGasWell, unlockAllRecipes: true)
+            .AddLayoutEntityToUnlock(ModIds.Machines.GasGenerator)
+            .AddLayoutEntityToUnlock(ModIds.Machines.NaturalGasGenerator)
             .AddRecipeToUnlock(ModIds.Recipes.NaturalGasTreatment)
             .AddRecipeToUnlock(ModIds.Recipes.NaturalGasFlaring)
             .AddRecipeToUnlock(ModIds.Recipes.NaturalGasSteamGeneration)

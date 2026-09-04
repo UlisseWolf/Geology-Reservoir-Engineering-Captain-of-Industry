@@ -24,7 +24,6 @@
   "build-machine.NaturalGasInjectionPump.description": "Injeta gás combustível já tratado num depósito de Gás Natural para armazenamento subterrâneo. Só funciona num depósito de Gás Natural - construa dentro do alcance do depósito que deve abastecer.",
   "build-machine.WaterInjectionPump.name": "Bomba de injeção de água",
   "build-machine.WaterInjectionPump.description": "Injeta água no subsolo, recarregando ao longo do tempo qualquer depósito que esteja por baixo - um reservatório geotérmico ou um aquífero. Construa dentro do alcance do depósito que deve abastecer.",
-  "build-machine.WaterInjectionPump.reserve-description": "Estado do reservatório subterrâneo que esta bomba está a recarregar.",
   "build-machine.OilInjectionPump.name": "Bomba de injeção de petróleo",
   "build-machine.OilInjectionPump.description": "Injeta CO2, água do mar ou vapor num depósito de petróleo para recuperação avançada, fraturamento hidráulico ou recuperação térmica avançada. Só funciona num depósito de petróleo - construa dentro do alcance do depósito que deve abastecer.",
   "build-machine.InjectionPump.reserve-description": "Estado do reservatório subterrâneo que esta bomba está a recarregar.",
@@ -36,5 +35,16 @@
   "world.NaturalGasRig.name": "Plataforma de gás natural",
   "world.NaturalGasRig.description": "Este local fornece gás natural quando lhe são atribuídos trabalhadores.",
   "research.AcidStimulation.name": "Acidificação",
-  "research.AcidStimulation.description": "Desbloqueia a injeção de ácido na bomba de injeção de petróleo, recuperando petróleo adicional de um depósito de petróleo já existente."
+  "research.AcidStimulation.description": "Desbloqueia a injeção de ácido na bomba de injeção de petróleo, recuperando petróleo adicional de um depósito de petróleo já existente.",
+  "build-machine.GasGenerator.name": "Gerador a gás",
+  "build-machine.GasGenerator.description": "Queima Fuel Gas para produzir eletricidade.",
+  "build-machine.NaturalGasGenerator.name": "Gerador a gás natural",
+  "build-machine.NaturalGasGenerator.description": "Queima Gás Natural bruto para produzir eletricidade, sem o tratar primeiro em Fuel Gas.",
+  "virtual-resource.GeothermalHighEnthalpy.name": "Reservatório geotérmico (alta entalpia)",
+  "virtual-resource.GeothermalHighEnthalpy.description": "Um reservatório geotérmico quente, quente o suficiente para vaporizar diretamente em vapor de alta pressão quando explorado.",
+  "virtual-resource.GeothermalMediumEnthalpy.name": "Reservatório geotérmico (média entalpia)",
+  "virtual-resource.GeothermalMediumEnthalpy.description": "Um reservatório geotérmico moderadamente quente, que produz vapor de baixa pressão quando explorado.",
+  "virtual-resource.GeothermalLowEnthalpy.name": "Reservatório geotérmico (baixa entalpia)",
+  "virtual-resource.GeothermalLowEnthalpy.description": "Um reservatório geotérmico mais frio, que produz apenas vapor esgotado quando explorado.",
+  "toolbar-category.ElectricGenerators.name": "Geradores elétricos"
 }
