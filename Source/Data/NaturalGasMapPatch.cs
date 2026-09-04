@@ -124,6 +124,16 @@ internal static class NaturalGasMapPatch {
                 continue;
             }
 
+            // Guards against this postfix ever running more than once for the same result -
+            // for example, if the patched method is invoked more than once for the same map
+            // during a single session, an unguarded postfix would append a second gas deposit
+            // at the same position each time, silently doubling every gas deposit on the map.
+            bool alreadyHasGas = __result.AsEnumerable().Any(r => r.Product.Id == NaturalGasProto.Id && r.Position == resource.Position)
+                || additions.Any(r => r.Position == resource.Position);
+            if (alreadyHasGas) {
+                continue;
+            }
+
             var gasQuantity = new Quantity((int)(resource.ConfiguredCapacity.Value * GAS_CAPACITY_FRACTION));
             additions.Add(new SimpleVirtualResource(NaturalGasProto, gasQuantity, resource.Position, resource.MaxRadius));
         }
@@ -147,8 +157,18 @@ internal static class NaturalGasMapPatch {
             return;
         }
 
+        Tile3i gasPosition = config.Position.Tile2iRounded.ExtendZ(0);
+
+        // Same guard as MapPostfix above: without this check, this postfix running more than
+        // once for the same feature generator instance would append a duplicate gas deposit at
+        // the same position each time.
+        bool alreadyHasGas = __result.AsEnumerable().Any(r => r.Product.Id == NaturalGasProto.Id && r.Position == gasPosition);
+        if (alreadyHasGas) {
+            return;
+        }
+
         var gasQuantity = new Quantity((int)(config.ConfiguredCapacity.Value * GAS_CAPACITY_FRACTION));
-        var gasResource = new SimpleVirtualResource(NaturalGasProto, gasQuantity, config.Position.Tile2iRounded.ExtendZ(0), config.MaxRadius);
+        var gasResource = new SimpleVirtualResource(NaturalGasProto, gasQuantity, gasPosition, config.MaxRadius);
         __result = __result.Add(gasResource);
     }
 

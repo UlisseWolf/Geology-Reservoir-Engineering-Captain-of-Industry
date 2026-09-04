@@ -487,6 +487,14 @@ Natural Gas everywhere else in the mod. The loop checks each machine's own `Allo
 before considering any resource at its tile for recharge, matching what the entity already
 enforces for display.
 
+**Natural Gas co-location must guard against duplicate deposits at the same position.** Both
+`NaturalGasMapPatch.MapPostfix` and `GeneratorPostfix` check whether a Natural Gas deposit
+already exists at a given oil deposit's exact position before adding one, the same way
+`RetrofitExistingSave` already did. Without this check, either postfix running more than once
+for the same underlying data — for whatever reason the patched method itself might be invoked
+more than once — would silently add a second gas deposit at the same position each time,
+doubling (or worse) the gas available at every oil field on the map.
+
 **Recharge is capped once per deposit per check, not once per pump.** A deposit's radius means
 multiple pumps built at different positions can all resolve to the same underlying deposit.
 Without a cap, each working pump targeting that deposit would independently trigger a recharge
