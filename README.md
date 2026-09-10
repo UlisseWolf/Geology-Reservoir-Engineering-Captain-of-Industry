@@ -474,6 +474,24 @@ often the recharge manager finds a pump actively working - the manager's `REGEN_
 `SLOW_REGEN_PER_CHECK` / `STEPS_BETWEEN_CHECKS` / `SLOW_CHECK_MULTIPLIER` constants are what
 actually control pacing.
 
+**Recharge is accumulated every tick, not sampled at infrequent periodic checks.**
+`WorkedThisTick` reflects only the current tick, not "worked at some point recently". Sampling
+it once every `STEPS_BETWEEN_CHECKS * <tier multiplier>` ticks meant a pump that's genuinely
+productive most of the time, but happens to be momentarily blocked waiting for input at the
+exact tick a check fires, lost that entire cycle's recharge - normal, intermittent pump
+logistics (brief gaps while waiting for a CO2/Seawater/Steam/Acid delivery, for example) make
+this common for a single pump. Many pumps on the same deposit masked the problem by making it
+overwhelmingly likely that at least one of them was active at the sampled instant, reaching close
+to the maximum rate through sheer redundancy - while a single, otherwise well-supplied pump
+could fall well short of it purely through unlucky timing (one report: 60 pumps sustained
+90 units/minute, matching the tier's theoretical maximum, while 1 pump only reached 30). Each
+tier's rate is now expressed as a small per-tick fraction (`Fix32.FromFraction`), credited to a
+deposit on every tick at least one qualifying pump on it is working and accumulated in
+`m_pendingRecharge` until it reaches a whole unit, which is then flushed via `AddAsMuchAs`. The
+long-run maximum rate for each tier is unchanged - only how reliably a given pump count reaches
+it: one continuously-working pump now reaches the same maximum a pool of many pumps previously
+needed redundancy to approach.
+
 **`AllowedResourceIds` must be checked explicitly by `GeologyRegenManager`, not assumed.**
 Restricting a pump to a specific deposit type at the entity level
 (`InjectionPumpProto.AllowedResourceIds`) only affects what `InjectionPump` itself reports and
@@ -495,15 +513,15 @@ for the same underlying data — for whatever reason the patched method itself m
 more than once — would silently add a second gas deposit at the same position each time,
 doubling (or worse) the gas available at every oil field on the map.
 
-**Recharge is capped once per deposit per check, not once per pump.** A deposit's radius means
+**Recharge is capped once per deposit per tick, not once per pump.** A deposit's radius means
 multiple pumps built at different positions can all resolve to the same underlying deposit.
-Without a cap, each working pump targeting that deposit would independently trigger a recharge
-in the same check, so building enough pumps around a single deposit could refill it far faster
-than the configured slow pace intends, regardless of how conservative
-`SLOW_REGEN_PER_CHECK`/`SLOW_CHECK_MULTIPLIER` are individually. `GeologyRegenManager` tracks
-which deposits (by position) have already been recharged in the current check and skips any
-further pump targeting the same one - building more pumps around a deposit adds redundancy, not
-additional recharge speed.
+Without a cap, each working pump targeting that deposit would independently credit its own
+fraction in the same tick, so building enough pumps around a single deposit could refill it far
+faster than the configured slow pace intends, regardless of how conservative each tier's rate is
+individually. `GeologyRegenManager` tracks which deposits (by position) have already been
+credited on the current tick and skips any further pump targeting the same one - building more
+pumps around a deposit improves the odds that at least one is working on any given tick, without
+letting several simultaneously-working pumps compound each other's contribution.
 
 **The reserve status panel aggregates across every resource a pump recognizes, rather than
 showing only the first one found.** In practice this only matters for the water injection pump,
