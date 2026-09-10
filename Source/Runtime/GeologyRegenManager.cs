@@ -33,114 +33,127 @@ namespace GeologyReservoirEngineering.Runtime;
 /// check below, applied per machine before its resources are considered for recharge, is what
 /// prevents this.
 ///
-/// While a pump is enabled AND actively completing production cycles (see
-/// <see cref="Machine.WorkedThisTick"/> below), this manager tops up the deposit at its location
-/// using <see cref="IVirtualTerrainResource.AddAsMuchAs"/>, which clamps to the deposit's
-/// configured capacity. This covers the three geothermal tiers this mod introduces, the vanilla
-/// Groundwater deposit, the vanilla crude oil deposit, and the Natural Gas deposit, so a single
-/// recharge loop serves geothermal reinjection, aquifer water storage, enhanced oil recovery,
-/// hydraulic fracturing, and underground gas storage alike, across all three pumps.
+/// Recharge is accumulated every simulation tick, not sampled at infrequent periodic checks.
+/// <see cref="Machine.WorkedThisTick"/> reflects only the current tick, not "worked at some
+/// point recently" - a pump that is genuinely productive most of the time, but happens to be
+/// momentarily blocked waiting for input at the exact tick a periodic check fires, would lose
+/// that entire cycle's recharge under a sampling design, even though it was actively working
+/// almost the whole interval. A single pump's normal, intermittent logistics (brief gaps while
+/// waiting for CO2/Seawater/Steam/Acid deliveries, for example) make this common. Checking every
+/// tick instead - crediting a small fraction of a tier's per-tick rate to a deposit whenever any
+/// qualifying pump on it is working that tick, and flushing whole units to
+/// <see cref="IVirtualTerrainResource.AddAsMuchAs"/> once the accumulated fraction reaches at
+/// least 1 - means a pump that works, say, a third of the time is credited a third of the
+/// maximum rate, rather than being at the mercy of whether it happened to be active at one
+/// arbitrarily-timed sample. Many pumps on the same deposit no longer need to "get lucky" to
+/// reach the maximum rate either - one pump working continuously already achieves it.
 ///
-/// Checking <c>machine.IsEnabled</c> alone is not sufficient: a machine stays enabled while
-/// blocked waiting for input ("waiting for products" in the UI). <c>Machine.WorkedThisTick</c>
-/// (backed by the public <c>CurrentState</c> property) reflects whether the machine actually
-/// completed a production cycle, and is checked here alongside <c>IsEnabled</c> so recharging
-/// only happens when the pump is genuinely running, not merely powered on.
+/// <see cref="Machine.IsEnabled"/> alone is not sufficient to decide whether a pump is
+/// contributing: a machine stays enabled while blocked waiting for input ("waiting for
+/// products" in the UI). <c>WorkedThisTick</c> (backed by the public <c>CurrentState</c>
+/// property) reflects whether the machine actually completed a production step this tick, and
+/// is checked here alongside <c>IsEnabled</c> so accumulation only happens when the pump is
+/// genuinely running, not merely powered on.
 ///
 /// Three separate recharge rates are used, reflecting three different real-world pacing
-/// categories:
+/// categories - expressed here as a per-tick fraction of the same rates this manager used before
+/// switching to per-tick accumulation, so the maximum achievable long-run rate for each tier is
+/// unchanged, only how reliably a given pump count reaches it:
 /// <list type="bullet">
 /// <item>Geothermal (the three enthalpy tiers this mod introduces) recharges fastest
-/// (<see cref="GEOTHERMAL_REGEN_PER_CHECK"/> every <see cref="STEPS_BETWEEN_CHECKS"/> steps) -
-/// reinjection is an immediate, intentional part of geothermal operation, maintaining reservoir
-/// pressure for continued heat extraction.</item>
+/// (<see cref="GEOTHERMAL_REGEN_PER_CHECK"/> every <see cref="STEPS_BETWEEN_CHECKS"/> ticks,
+/// worth of accumulation) - reinjection is an immediate, intentional part of geothermal
+/// operation, maintaining reservoir pressure for continued heat extraction.</item>
 /// <item>Groundwater recharges at a distinctly slower rate
-/// (<see cref="GROUNDWATER_REGEN_PER_CHECK"/>, checked only once every
-/// <see cref="GROUNDWATER_CHECK_MULTIPLIER"/> general checks) - real aquifer recharge, natural
-/// or managed, happens over much longer timescales than geothermal reinjection.</item>
+/// (<see cref="GROUNDWATER_REGEN_PER_CHECK"/> every <c>STEPS_BETWEEN_CHECKS *
+/// GROUNDWATER_CHECK_MULTIPLIER</c> ticks, worth of accumulation) - real aquifer recharge,
+/// natural or managed, happens over much longer timescales than geothermal reinjection.</item>
 /// <item>Crude oil and Natural Gas recharge slowest of all
-/// (<see cref="SLOW_REGEN_PER_CHECK"/>, checked only once every
-/// <see cref="SLOW_CHECK_MULTIPLIER"/> general checks) - enhanced oil recovery, hydraulic
-/// fracturing, thermal EOR, acid stimulation, and underground gas storage each improve how much
-/// of a field's resource is ultimately recoverable/available by a modest, bounded amount, not an
-/// indefinite refill. Oil and gas share this same rate/cadence rather than each having their
-/// own, since both represent the same category of "geological, not indefinitely replenishable"
-/// resource in this mod's model.
+/// (<see cref="SLOW_REGEN_PER_CHECK"/> every <c>STEPS_BETWEEN_CHECKS * SLOW_CHECK_MULTIPLIER</c>
+/// ticks, worth of accumulation) - enhanced oil recovery, hydraulic fracturing, thermal EOR,
+/// acid stimulation, and underground gas storage each improve how much of a field's resource is
+/// ultimately recoverable/available by a modest, bounded amount, not an indefinite refill. Oil
+/// and gas share this same rate rather than each having their own, since both represent the
+/// same category of "geological, not indefinitely replenishable" resource in this mod's model.
 /// </item>
 /// </list>
 ///
-/// Recipe duration is not part of any of this pacing, despite its name suggesting otherwise: a
-/// machine is in <c>State.Working</c> - and therefore <c>WorkedThisTick</c> is true - on every
-/// simulation tick a recipe is actively in progress, not only on the tick it completes. A pump
-/// running a 240-second recipe is "working" just as continuously as one running a 10-second
-/// recipe, provided its input supply never runs out. Recipe duration governs how much input a
-/// pump consumes per unit of real time (its logistics cost), not how often this manager finds
-/// it actively working. The only actual throttle on recharge rate is the constants below.
+/// Recipe duration is still not part of any of this pacing, despite its name suggesting
+/// otherwise: a machine is in <c>State.Working</c> - and therefore <c>WorkedThisTick</c> is true
+/// - on every simulation tick a recipe is actively in progress, not only on the tick it
+/// completes. A pump running a 240-second recipe is "working" just as continuously as one
+/// running a 10-second recipe, provided its input supply never runs out. Recipe duration governs
+/// how much input a pump consumes per unit of real time (its logistics cost), not how often this
+/// manager finds it actively working.
 ///
-/// Recharge is capped once per deposit per check, not once per pump: a deposit's radius means
-/// multiple pumps can be built at different positions and all resolve to the same underlying
-/// deposit. Without a cap, each working pump targeting that deposit would trigger its own
-/// <c>AddAsMuchAs</c> call in the same check, so recharge would scale linearly, and uncapped,
-/// with the number of pumps built around a single deposit - reachable even though each tier's
-/// own rate/cadence deliberately keeps a single pump's pace measured. <see cref="OnSimUpdate"/>
-/// tracks which deposits (by position) have already been recharged in the current check and
-/// skips any further pump targeting the same one, so building more pumps around a deposit adds
-/// redundancy rather than compounding recharge speed.
+/// Accumulation is still capped once per deposit per tick, not once per pump: a deposit's radius
+/// means multiple pumps can be built at different positions and all resolve to the same
+/// underlying deposit. Without this cap, each working pump targeting that deposit would credit
+/// its own fraction in the same tick, so accumulation would scale linearly, and uncapped, with
+/// the number of pumps built around a single deposit. <see cref="OnSimUpdate"/> tracks which
+/// deposits (by position) have already been credited this tick and skips any further pump
+/// targeting the same one, so building more pumps around a deposit improves the odds that at
+/// least one of them is working on any given tick, without letting several simultaneously-
+/// working pumps compound each other's contribution on the same tick.
 ///
 /// The manager also periodically calls <see cref="Entity.UpdateIsEnabled"/> on each pump, since
 /// the engine only re-evaluates a machine's enabled state at discrete trigger points
-/// (construction, pause toggling, maintenance events), not on every simulation tick. Forcing a
-/// periodic check ensures each pump's auto-stop-when-full behavior (implemented in
-/// <c>InjectionPump.IsEnabledNow</c>) is applied continuously during normal play.
+/// (construction, pause toggling, maintenance events), not on every simulation tick. This check
+/// stays on the coarser <see cref="STEPS_BETWEEN_CHECKS"/> cadence, since the auto-stop-when-full
+/// behavior it supports (implemented in <c>InjectionPump.IsEnabledNow</c>) doesn't need
+/// per-tick precision the way accumulation does.
 ///
 /// This class is wired through <see cref="GeologyReservoirEngineeringMod.Initialize"/> using
 /// standard dependency injection and public engine interfaces. No Harmony patching is involved.
 /// </summary>
 public sealed class GeologyRegenManager : IDisposable {
 
-    /// <summary>Quantity restored to a geothermal deposit on each check.</summary>
+    /// <summary>Quantity restored to a geothermal deposit over <see cref="STEPS_BETWEEN_CHECKS"/> ticks of continuous work.</summary>
     private const int GEOTHERMAL_REGEN_PER_CHECK = 60;
 
     /// <summary>
-    /// Quantity restored to the Groundwater deposit on each medium-tier check - substantially
-    /// lower than <see cref="GEOTHERMAL_REGEN_PER_CHECK"/>, since real aquifer recharge is much
-    /// slower than geothermal reinjection.
+    /// Quantity restored to the Groundwater deposit over <c>STEPS_BETWEEN_CHECKS *
+    /// GROUNDWATER_CHECK_MULTIPLIER</c> ticks of continuous work - substantially lower than
+    /// <see cref="GEOTHERMAL_REGEN_PER_CHECK"/>'s equivalent rate, since real aquifer recharge
+    /// is much slower than geothermal reinjection.
     /// </summary>
     private const int GROUNDWATER_REGEN_PER_CHECK = 20;
 
     /// <summary>
-    /// Quantity restored to a crude oil or Natural Gas deposit on each slow-tier check -
-    /// substantially lower than either tier above, since EOR/fracturing/gas storage represent a
-    /// modest recovery/storage improvement in reality, not an indefinite refill.
+    /// Quantity restored to a crude oil or Natural Gas deposit over <c>STEPS_BETWEEN_CHECKS *
+    /// SLOW_CHECK_MULTIPLIER</c> ticks of continuous work - substantially lower than either tier
+    /// above, since EOR/fracturing/gas storage represent a modest recovery/storage improvement
+    /// in reality, not an indefinite refill.
     /// </summary>
     private const int SLOW_REGEN_PER_CHECK = 6;
 
-    /// <summary>Number of simulation steps between general checks.</summary>
+    /// <summary>Reference tick window the geothermal rate above is expressed over.</summary>
     private const int STEPS_BETWEEN_CHECKS = 30;
 
-    /// <summary>
-    /// Number of general checks between medium-tier (Groundwater) recharges - the deposit is
-    /// recharged only once every this many <see cref="STEPS_BETWEEN_CHECKS"/> cycles
-    /// (effectively every <c>STEPS_BETWEEN_CHECKS * GROUNDWATER_CHECK_MULTIPLIER</c> simulation
-    /// steps), on top of the already-reduced <see cref="GROUNDWATER_REGEN_PER_CHECK"/> amount,
-    /// kept separate from the geothermal and oil/gas cadences so tuning groundwater recharge
-    /// speed doesn't affect them.
-    /// </summary>
+    /// <summary>How many <see cref="STEPS_BETWEEN_CHECKS"/> windows the Groundwater rate is expressed over.</summary>
     private const int GROUNDWATER_CHECK_MULTIPLIER = 3;
 
-    /// <summary>
-    /// Number of general checks between slow-tier (oil/gas) recharges - see
-    /// <see cref="GROUNDWATER_CHECK_MULTIPLIER"/> for how this style of multiplier works.
-    /// </summary>
+    /// <summary>How many <see cref="STEPS_BETWEEN_CHECKS"/> windows the oil/gas rate is expressed over.</summary>
     private const int SLOW_CHECK_MULTIPLIER = 4;
+
+    private static readonly Fix32 GEOTHERMAL_REGEN_PER_TICK = Fix32.FromFraction(GEOTHERMAL_REGEN_PER_CHECK, STEPS_BETWEEN_CHECKS);
+    private static readonly Fix32 GROUNDWATER_REGEN_PER_TICK = Fix32.FromFraction(GROUNDWATER_REGEN_PER_CHECK, STEPS_BETWEEN_CHECKS * GROUNDWATER_CHECK_MULTIPLIER);
+    private static readonly Fix32 SLOW_REGEN_PER_TICK = Fix32.FromFraction(SLOW_REGEN_PER_CHECK, STEPS_BETWEEN_CHECKS * SLOW_CHECK_MULTIPLIER);
 
     private readonly IEntitiesManager m_entitiesManager;
     private readonly IVirtualResourceManager m_virtualResourceManager;
     private readonly ISimLoopEvents m_simLoopEvents;
 
-    private int m_stepsSinceLastCheck;
-    private int m_checksSinceLastGroundwaterRecharge;
-    private int m_checksSinceLastSlowRecharge;
+    private int m_ticksSinceLastEnabledCheck;
+
+    /// <summary>
+    /// Fractional recharge accumulated so far for each deposit position, not yet large enough
+    /// to flush a whole unit to <see cref="IVirtualTerrainResource.AddAsMuchAs"/>. Not saved -
+    /// losing at most a few ticks' worth of partial progress on load is immaterial, and avoiding
+    /// serialization keeps this manager a plain, unsaved service (see
+    /// <see cref="GeologyReservoirEngineeringMod.Initialize"/>).
+    /// </summary>
+    private readonly Dictionary<Tile3i, Fix32> m_pendingRecharge = new();
 
     public GeologyRegenManager(
         IEntitiesManager entitiesManager,
@@ -159,28 +172,16 @@ public sealed class GeologyRegenManager : IDisposable {
     }
 
     private void OnSimUpdate() {
-        m_stepsSinceLastCheck++;
-        if (m_stepsSinceLastCheck < STEPS_BETWEEN_CHECKS) {
-            return;
-        }
-        m_stepsSinceLastCheck = 0;
-
-        m_checksSinceLastGroundwaterRecharge++;
-        bool rechargeGroundwaterThisCheck = m_checksSinceLastGroundwaterRecharge >= GROUNDWATER_CHECK_MULTIPLIER;
-        if (rechargeGroundwaterThisCheck) {
-            m_checksSinceLastGroundwaterRecharge = 0;
+        m_ticksSinceLastEnabledCheck++;
+        bool refreshEnabledStateThisTick = m_ticksSinceLastEnabledCheck >= STEPS_BETWEEN_CHECKS;
+        if (refreshEnabledStateThisTick) {
+            m_ticksSinceLastEnabledCheck = 0;
         }
 
-        m_checksSinceLastSlowRecharge++;
-        bool rechargeSlowResourcesThisCheck = m_checksSinceLastSlowRecharge >= SLOW_CHECK_MULTIPLIER;
-        if (rechargeSlowResourcesThisCheck) {
-            m_checksSinceLastSlowRecharge = 0;
-        }
-
-        // Tracks deposits already recharged this check, by position, so a deposit reachable by
-        // several pumps is only recharged once per check regardless of how many of them are
+        // Tracks deposits already credited this tick, by position, so a deposit reachable by
+        // several pumps is only credited once per tick regardless of how many of them are
         // working - see the class-level remarks on per-deposit vs. per-pump capping.
-        var rechargedDepositPositions = new HashSet<Tile3i>();
+        var creditedPositionsThisTick = new HashSet<Tile3i>();
 
         foreach (Machine machine in m_entitiesManager.GetAllEntitiesOfType<Machine>()) {
             var machineId = (MachineProto.ID)machine.Prototype.Id;
@@ -190,7 +191,9 @@ public sealed class GeologyRegenManager : IDisposable {
                 continue;
             }
 
-            machine.UpdateIsEnabled();
+            if (refreshEnabledStateThisTick) {
+                machine.UpdateIsEnabled();
+            }
 
             if (!machine.IsEnabled || !machine.WorkedThisTick) {
                 continue;
@@ -204,56 +207,54 @@ public sealed class GeologyRegenManager : IDisposable {
                     continue;
                 }
 
-                if (isSlowTierResource(resource) && !rechargeSlowResourcesThisCheck) {
+                Fix32? regenPerTick = regenPerTickFor(resource);
+                if (!regenPerTick.HasValue) {
                     continue;
                 }
 
-                if (isGroundwater(resource) && !rechargeGroundwaterThisCheck) {
+                if (!creditedPositionsThisTick.Add(resource.Position)) {
                     continue;
                 }
 
-                int? regenAmount = regenAmountFor(resource);
-                if (!regenAmount.HasValue) {
-                    continue;
-                }
-
-                if (!rechargedDepositPositions.Add(resource.Position)) {
-                    continue;
-                }
-
-                resource.AddAsMuchAs(new Quantity(regenAmount.Value));
+                accumulate(resource, regenPerTick.Value);
             }
         }
     }
 
-    /// <summary>Whether the given resource uses the slower oil/gas recharge cadence.</summary>
-    private static bool isSlowTierResource(IVirtualTerrainResource resource) {
-        var id = resource.Product.Id;
-        return id == Mafi.Core.IdsCore.Products.VirtualCrudeOil || id == ModIds.VirtualResources.NaturalGas;
-    }
+    /// <summary>
+    /// Adds this tick's fractional credit for the given deposit, flushing whole units to the
+    /// deposit itself once the running total reaches at least 1.
+    /// </summary>
+    private void accumulate(IVirtualTerrainResource resource, Fix32 regenPerTick) {
+        Fix32 pending = m_pendingRecharge.TryGetValue(resource.Position, out Fix32 existing) ? existing : Fix32.Zero;
+        pending += regenPerTick;
 
-    /// <summary>Whether the given resource is the vanilla Groundwater deposit.</summary>
-    private static bool isGroundwater(IVirtualTerrainResource resource) {
-        return resource.Product.Id == Mafi.Core.IdsCore.Products.Groundwater;
+        int wholeUnits = pending.ToIntFloored();
+        if (wholeUnits > 0) {
+            resource.AddAsMuchAs(new Quantity(wholeUnits));
+            pending -= wholeUnits;
+        }
+
+        m_pendingRecharge[resource.Position] = pending;
     }
 
     /// <summary>
-    /// The amount to recharge the given resource by on each check, or null if this mod does not
+    /// The per-tick fraction to accumulate for the given resource, or null if this mod does not
     /// recognize it. Crude oil, Natural Gas, and Groundwater each use a distinctly different
     /// rate from geothermal - see the class-level remarks.
     /// </summary>
-    private static int? regenAmountFor(IVirtualTerrainResource resource) {
+    private static Fix32? regenPerTickFor(IVirtualTerrainResource resource) {
         var id = resource.Product.Id;
         if (id == Mafi.Core.IdsCore.Products.VirtualCrudeOil || id == ModIds.VirtualResources.NaturalGas) {
-            return SLOW_REGEN_PER_CHECK;
+            return SLOW_REGEN_PER_TICK;
         }
         if (id == Mafi.Core.IdsCore.Products.Groundwater) {
-            return GROUNDWATER_REGEN_PER_CHECK;
+            return GROUNDWATER_REGEN_PER_TICK;
         }
         if (id == ModIds.VirtualResources.GeothermalHighEnthalpy
             || id == ModIds.VirtualResources.GeothermalMediumEnthalpy
             || id == ModIds.VirtualResources.GeothermalLowEnthalpy) {
-            return GEOTHERMAL_REGEN_PER_CHECK;
+            return GEOTHERMAL_REGEN_PER_TICK;
         }
         return null;
     }
