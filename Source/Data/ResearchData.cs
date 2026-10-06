@@ -193,6 +193,7 @@ internal class ResearchData : IResearchNodesData, IModData {
         // dependency in that part of the tree instead of the oil-extraction branch.
         registrator.ResearchNodeProtoBuilder
             .Start(ModTranslation.Get("research.NaturalGasExtraction.name", "Natural gas extraction"), ModIds.ResearchNodes.NaturalGasExtraction, costMonths: 85)
+            .Description(ModTranslation.Get("research.NaturalGasExtraction.description", "Unlocks the natural gas well, the treatment recipe (Natural Gas into Fuel Gas), direct burning in the Flare and the gas-fired Boiler, thermal enhanced gas recovery (Low-pressure steam injection), and the Fuel Gas and Natural Gas generators."))
             .AddParents(hydrogenProduction)
             .SetGridPosition(new Vector2i(102, 3))
             .AddMachineToUnlock(ModIds.Machines.NaturalGasWell, unlockAllRecipes: true)

@@ -21,7 +21,7 @@
   "research.NaturalGasExtraction.name": "Extraction de gaz naturel",
   "research.NaturalGasStorage.name": "Stockage souterrain de gaz",
   "build-machine.NaturalGasInjectionPump.name": "Pompe d'injection de gaz naturel",
-  "build-machine.NaturalGasInjectionPump.description": "Injecte du gaz combustible déjà traité dans un gisement de Gaz Naturel pour le stockage souterrain. Ne fonctionne que sur un gisement de Gaz Naturel - construisez-la à portée du gisement qu'elle doit alimenter.",
+  "build-machine.NaturalGasInjectionPump.description": "Injecte un fluide dans un gisement de Gaz Naturel. Deux recettes : du gaz combustible déjà traité pour le stockage souterrain, ou de la vapeur basse pression (produite par le puits géothermique à moyenne enthalpie) pour la récupération thermique assistée. La vapeur épuisée n'est pas acceptée. Ne fonctionne que sur un gisement de Gaz Naturel - construisez-la à portée du gisement qu'elle doit soutenir.",
   "build-machine.WaterInjectionPump.name": "Pompe d'injection d'eau",
   "build-machine.WaterInjectionPump.description": "Injecte de l'eau dans le sous-sol, rechargeant au fil du temps le gisement qui se trouve en dessous - un réservoir géothermique ou une nappe phréatique. Construisez-la à portée du gisement qu'elle doit alimenter.",
   "build-machine.OilInjectionPump.name": "Pompe d'injection de pétrole",
@@ -46,5 +46,6 @@
   "virtual-resource.GeothermalMediumEnthalpy.description": "Un réservoir géothermique modérément chaud, produisant de la vapeur basse pression une fois exploité.",
   "virtual-resource.GeothermalLowEnthalpy.name": "Réservoir géothermique (basse enthalpie)",
   "virtual-resource.GeothermalLowEnthalpy.description": "Un réservoir géothermique plus froid, ne produisant qu'une vapeur épuisée une fois exploité.",
-  "toolbar-category.ElectricGenerators.name": "Générateurs électriques"
+  "toolbar-category.ElectricGenerators.name": "Générateurs électriques",
+  "research.NaturalGasExtraction.description": "Débloque le puits de gaz naturel, la recette de traitement (Gaz Naturel en gaz combustible), la combustion directe à la torche et dans la chaudière à gaz, la récupération thermique assistée du gaz (injection de vapeur basse pression) et les générateurs à gaz combustible et à gaz naturel."
 }

@@ -21,7 +21,7 @@
   "research.NaturalGasExtraction.name": "Extracción de gas natural",
   "research.NaturalGasStorage.name": "Almacenamiento subterráneo de gas",
   "build-machine.NaturalGasInjectionPump.name": "Bomba de inyección de gas natural",
-  "build-machine.NaturalGasInjectionPump.description": "Inyecta gas combustible ya tratado en un yacimiento de Gas Natural para almacenamiento subterráneo. Solo funciona en un yacimiento de Gas Natural - constrúyela dentro del radio del yacimiento que debe abastecer.",
+  "build-machine.NaturalGasInjectionPump.description": "Inyecta un fluido en un yacimiento de Gas Natural. Dos recetas: gas combustible ya tratado para el almacenamiento subterráneo, o vapor de baja presión (producido por el pozo geotérmico de media entalpía) para la recuperación térmica mejorada. El vapor agotado no se acepta. Solo funciona sobre un yacimiento de Gas Natural: constrúyela dentro del alcance del yacimiento que debe apoyar.",
   "build-machine.WaterInjectionPump.name": "Bomba de inyección de agua",
   "build-machine.WaterInjectionPump.description": "Inyecta agua en el subsuelo, recargando con el tiempo cualquier yacimiento que se encuentre debajo - un yacimiento geotérmico o un acuífero. Constrúyela dentro del radio del yacimiento que debe abastecer.",
   "build-machine.OilInjectionPump.name": "Bomba de inyección de petróleo",
@@ -46,5 +46,6 @@
   "virtual-resource.GeothermalMediumEnthalpy.description": "Un yacimiento geotérmico moderadamente caliente, que produce vapor de baja presión al explotarlo.",
   "virtual-resource.GeothermalLowEnthalpy.name": "Yacimiento geotérmico (baja entalpía)",
   "virtual-resource.GeothermalLowEnthalpy.description": "Un yacimiento geotérmico más frío, que solo produce vapor agotado al explotarlo.",
-  "toolbar-category.ElectricGenerators.name": "Generadores eléctricos"
+  "toolbar-category.ElectricGenerators.name": "Generadores eléctricos",
+  "research.NaturalGasExtraction.description": "Desbloquea el pozo de gas natural, la receta de tratamiento (Gas Natural a gas combustible), la combustión directa en la antorcha y en la caldera de gas, la recuperación térmica mejorada de gas (inyección de vapor de baja presión) y los generadores de gas combustible y de gas natural."
 }

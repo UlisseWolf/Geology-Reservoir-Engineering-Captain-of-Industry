@@ -55,6 +55,18 @@ namespace GeologyReservoirEngineering.Runtime;
 /// is checked here alongside <c>IsEnabled</c> so accumulation only happens when the pump is
 /// genuinely running, not merely powered on.
 ///
+/// Checking every tick means this manager runs far more often than it used to, which in turn
+/// means <see cref="IEntitiesManager.GetAllEntitiesOfType{T}"/> - previously called fresh on
+/// every check - cannot be called every tick too: it returns a live view over the engine's own
+/// mutable-during-iteration entity collection, and querying it at very high frequency from the
+/// simulation background thread surfaced a crash in that collection's enumerator bookkeeping
+/// that calling it only once every <see cref="STEPS_BETWEEN_CHECKS"/> ticks, as the previous
+/// version of this manager did, did not. Instead, this manager maintains its own plain
+/// <see cref="List{Machine}"/> of the three pump types, seeded once at construction via a single
+/// <c>GetAllEntitiesOfType</c> call and kept up to date incrementally afterward through
+/// <see cref="IEntitiesManager.EntityAdded"/>/<see cref="IEntitiesManager.EntityRemoved"/>,
+/// rather than re-querying the engine's entity collection on every tick.
+///
 /// Three separate recharge rates are used, reflecting three different real-world pacing
 /// categories - expressed here as a per-tick fraction of the same rates this manager used before
 /// switching to per-tick accumulation, so the maximum achievable long-run rate for each tier is
@@ -147,6 +159,13 @@ public sealed class GeologyRegenManager : IDisposable {
     private int m_ticksSinceLastEnabledCheck;
 
     /// <summary>
+    /// This mod's three injection pump machines currently in the world, maintained incrementally
+    /// via <see cref="onEntityAdded"/>/<see cref="onEntityRemoved"/> rather than re-queried from
+    /// the engine's entity collection every tick - see the class-level remarks.
+    /// </summary>
+    private readonly List<Machine> m_pumps = new();
+
+    /// <summary>
     /// Fractional recharge accumulated so far for each deposit position, not yet large enough
     /// to flush a whole unit to <see cref="IVirtualTerrainResource.AddAsMuchAs"/>. Not saved -
     /// losing at most a few ticks' worth of partial progress on load is immaterial, and avoiding
@@ -164,11 +183,42 @@ public sealed class GeologyRegenManager : IDisposable {
         m_virtualResourceManager = virtualResourceManager;
         m_simLoopEvents = simLoopEvents;
 
+        // One-time seed of whichever pumps already exist (e.g. a loaded save) - EntityAdded
+        // only fires for entities added from this point onward.
+        foreach (Machine machine in m_entitiesManager.GetAllEntitiesOfType<Machine>()) {
+            if (isInjectionPump(machine)) {
+                m_pumps.Add(machine);
+            }
+        }
+
+        m_entitiesManager.EntityAdded.Add(this, onEntityAdded);
+        m_entitiesManager.EntityRemoved.Add(this, onEntityRemoved);
         ((IEventNonSaveable)m_simLoopEvents.Update).AddNonSaveable<GeologyRegenManager>(this, OnSimUpdate);
     }
 
     public void Dispose() {
+        m_entitiesManager.EntityAdded.Remove(this, onEntityAdded);
+        m_entitiesManager.EntityRemoved.Remove(this, onEntityRemoved);
         ((IEventNonSaveable)m_simLoopEvents.Update).RemoveNonSaveable<GeologyRegenManager>(this, OnSimUpdate);
+    }
+
+    private void onEntityAdded(IEntity entity) {
+        if (entity is Machine machine && isInjectionPump(machine)) {
+            m_pumps.Add(machine);
+        }
+    }
+
+    private void onEntityRemoved(IEntity entity) {
+        if (entity is Machine machine && isInjectionPump(machine)) {
+            m_pumps.Remove(machine);
+        }
+    }
+
+    private static bool isInjectionPump(Machine machine) {
+        var machineId = (MachineProto.ID)machine.Prototype.Id;
+        return machineId == ModIds.Machines.WaterInjectionPump
+            || machineId == ModIds.Machines.OilInjectionPump
+            || machineId == ModIds.Machines.NaturalGasInjectionPump;
     }
 
     private void OnSimUpdate() {
@@ -183,14 +233,7 @@ public sealed class GeologyRegenManager : IDisposable {
         // working - see the class-level remarks on per-deposit vs. per-pump capping.
         var creditedPositionsThisTick = new HashSet<Tile3i>();
 
-        foreach (Machine machine in m_entitiesManager.GetAllEntitiesOfType<Machine>()) {
-            var machineId = (MachineProto.ID)machine.Prototype.Id;
-            if (machineId != ModIds.Machines.WaterInjectionPump
-                && machineId != ModIds.Machines.OilInjectionPump
-                && machineId != ModIds.Machines.NaturalGasInjectionPump) {
-                continue;
-            }
-
+        foreach (Machine machine in m_pumps) {
             if (refreshEnabledStateThisTick) {
                 machine.UpdateIsEnabled();
             }
