@@ -245,7 +245,9 @@ To add a new language, copy `Translations/en.json`, translate the values, and sa
   contribution.
 - **`GeologyRegenManager` tracks its own pump list incrementally** (via entity add/remove
   events), rather than re-querying the engine's entity collection every tick, which caused a
-  crash under the frequent per-tick accumulation above.
+  crash under the frequent per-tick accumulation above. Its event subscriptions all use the
+  `NonSaveable` variants: a plain `Add` on an engine event stores the callback, and therefore the
+  subscribing object, in the save game, which fails for a service that isn't serializable.
 - **The reserve status panel aggregates across every resource a pump recognizes** (relevant only
   to the water pump, which can see multiple deposit types at once) rather than showing just the
   first one found.
