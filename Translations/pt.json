@@ -21,7 +21,7 @@
   "research.NaturalGasExtraction.name": "Extração de gás natural",
   "research.NaturalGasStorage.name": "Armazenamento subterrâneo de gás",
   "build-machine.NaturalGasInjectionPump.name": "Bomba de injeção de gás natural",
-  "build-machine.NaturalGasInjectionPump.description": "Injeta gás combustível já tratado num depósito de Gás Natural para armazenamento subterrâneo. Só funciona num depósito de Gás Natural - construa dentro do alcance do depósito que deve abastecer.",
+  "build-machine.NaturalGasInjectionPump.description": "Injeta um fluido num depósito de Gás Natural. Duas receitas: gás combustível já tratado para armazenamento subterrâneo, ou vapor de baixa pressão (produzido pelo poço geotérmico de média entalpia) para recuperação térmica avançada. O vapor esgotado não é aceite. Só funciona num depósito de Gás Natural - construa-a ao alcance do depósito que deve apoiar.",
   "build-machine.WaterInjectionPump.name": "Bomba de injeção de água",
   "build-machine.WaterInjectionPump.description": "Injeta água no subsolo, recarregando ao longo do tempo qualquer depósito que esteja por baixo - um reservatório geotérmico ou um aquífero. Construa dentro do alcance do depósito que deve abastecer.",
   "build-machine.OilInjectionPump.name": "Bomba de injeção de petróleo",
@@ -46,5 +46,6 @@
   "virtual-resource.GeothermalMediumEnthalpy.description": "Um reservatório geotérmico moderadamente quente, que produz vapor de baixa pressão quando explorado.",
   "virtual-resource.GeothermalLowEnthalpy.name": "Reservatório geotérmico (baixa entalpia)",
   "virtual-resource.GeothermalLowEnthalpy.description": "Um reservatório geotérmico mais frio, que produz apenas vapor esgotado quando explorado.",
-  "toolbar-category.ElectricGenerators.name": "Geradores elétricos"
+  "toolbar-category.ElectricGenerators.name": "Geradores elétricos",
+  "research.NaturalGasExtraction.description": "Desbloqueia o poço de gás natural, a receita de tratamento (Gás Natural em gás combustível), a queima direta no flare e na caldeira a gás, a recuperação térmica avançada de gás (injeção de vapor de baixa pressão) e os geradores a gás combustível e a gás natural."
 }

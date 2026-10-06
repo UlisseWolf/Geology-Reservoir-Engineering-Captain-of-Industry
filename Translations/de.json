@@ -21,7 +21,7 @@
   "research.NaturalGasExtraction.name": "Erdgasgewinnung",
   "research.NaturalGasStorage.name": "Untertage-Gasspeicherung",
   "build-machine.NaturalGasInjectionPump.name": "Erdgas-Injektionspumpe",
-  "build-machine.NaturalGasInjectionPump.description": "Injiziert bereits aufbereitetes Brenngas zur unterirdischen Speicherung in eine Erdgaslagerstätte. Funktioniert nur bei einer Erdgaslagerstätte - innerhalb der Reichweite der zu unterstützenden Lagerstätte bauen.",
+  "build-machine.NaturalGasInjectionPump.description": "Injiziert ein Fluid in eine Erdgaslagerstätte. Zwei Rezepte: bereits aufbereitetes Brenngas zur unterirdischen Speicherung oder Niederdruckdampf (aus der geothermischen Bohrung mittlerer Enthalpie) für die thermisch verbesserte Förderung. Erschöpfter Dampf wird nicht akzeptiert. Funktioniert nur auf einer Erdgaslagerstätte - baue sie in Reichweite der Lagerstätte, die sie unterstützen soll.",
   "build-machine.WaterInjectionPump.name": "Wasser-Injektionspumpe",
   "build-machine.WaterInjectionPump.description": "Injiziert Wasser in den Untergrund und füllt dabei mit der Zeit das darunterliegende Vorkommen wieder auf - ein geothermisches Reservoir oder einen Grundwasserleiter. Innerhalb der Reichweite der zu unterstützenden Lagerstätte bauen.",
   "build-machine.OilInjectionPump.name": "Öl-Injektionspumpe",
@@ -46,5 +46,6 @@
   "virtual-resource.GeothermalMediumEnthalpy.description": "Ein mäßig heißes geothermisches Reservoir, das bei Erschließung Niederdruckdampf liefert.",
   "virtual-resource.GeothermalLowEnthalpy.name": "Geothermisches Reservoir (niedrige Enthalpie)",
   "virtual-resource.GeothermalLowEnthalpy.description": "Ein kühleres geothermisches Reservoir, das bei Erschließung nur erschöpften Dampf liefert.",
-  "toolbar-category.ElectricGenerators.name": "Stromgeneratoren"
+  "toolbar-category.ElectricGenerators.name": "Stromgeneratoren",
+  "research.NaturalGasExtraction.description": "Schaltet die Erdgasbohrung, das Aufbereitungsrezept (Erdgas zu Brenngas), die direkte Verbrennung in der Fackel und im Gaskessel, die thermisch verbesserte Gasförderung (Niederdruckdampf-Injektion) sowie die Brenngas- und Erdgasgeneratoren frei."
 }

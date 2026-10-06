@@ -21,7 +21,7 @@
   "research.NaturalGasExtraction.name": "Natural gas extraction",
   "research.NaturalGasStorage.name": "Underground gas storage",
   "build-machine.NaturalGasInjectionPump.name": "Natural gas injection pump",
-  "build-machine.NaturalGasInjectionPump.description": "Injects treated Fuel Gas into a Natural Gas deposit for underground storage. Only works on a Natural Gas deposit - build within range of the deposit it should support.",
+  "build-machine.NaturalGasInjectionPump.description": "Injects a fluid into a Natural Gas deposit. Two recipes: already-treated Fuel Gas for underground storage, or Low-pressure steam (produced by the medium enthalpy geothermal well) for thermal enhanced recovery. Depleted steam is not accepted. Only works on a Natural Gas deposit - build within range of the deposit it should support.",
   "build-machine.WaterInjectionPump.name": "Water injection pump",
   "build-machine.WaterInjectionPump.description": "Injects water underground, recharging whatever deposit is beneath it over time - a geothermal reservoir or a groundwater aquifer. Build within range of the deposit it should support.",
   "build-machine.OilInjectionPump.name": "Oil injection pump",
@@ -46,5 +46,6 @@
   "virtual-resource.GeothermalMediumEnthalpy.description": "A moderately hot geothermal reservoir, yielding lower-pressure steam when tapped.",
   "virtual-resource.GeothermalLowEnthalpy.name": "Geothermal reservoir (low enthalpy)",
   "virtual-resource.GeothermalLowEnthalpy.description": "A cooler geothermal reservoir, only yielding a depleted steam quality when tapped.",
-  "toolbar-category.ElectricGenerators.name": "Electric generators"
+  "toolbar-category.ElectricGenerators.name": "Electric generators",
+  "research.NaturalGasExtraction.description": "Unlocks the natural gas well, the treatment recipe (Natural Gas into Fuel Gas), direct burning in the Flare and the gas-fired Boiler, thermal enhanced gas recovery (Low-pressure steam injection), and the Fuel Gas and Natural Gas generators."
 }

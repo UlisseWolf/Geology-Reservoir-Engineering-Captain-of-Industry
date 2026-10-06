@@ -353,7 +353,7 @@ internal class MachinesData : IModData {
             Proto.CreateStr(
                 ModIds.Machines.NaturalGasInjectionPump,
                 ModTranslation.Get("build-machine.NaturalGasInjectionPump.name", "Natural gas injection pump"),
-                ModTranslation.Get("build-machine.NaturalGasInjectionPump.description", "Injects treated Fuel Gas into a Natural Gas deposit for underground storage. Only works on a Natural Gas deposit - build within range of the deposit it should support.")),
+                ModTranslation.Get("build-machine.NaturalGasInjectionPump.description", "Injects a fluid into a Natural Gas deposit. Two recipes: already-treated Fuel Gas for underground storage, or Low-pressure steam (produced by the medium enthalpy geothermal well) for thermal enhanced recovery. Depleted steam is not accepted. Only works on a Natural Gas deposit - build within range of the deposit it should support.")),
             layout,
             costs,
             220.Kw(),
