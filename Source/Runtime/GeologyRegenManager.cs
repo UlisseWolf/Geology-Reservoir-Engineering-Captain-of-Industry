@@ -67,6 +67,13 @@ namespace GeologyReservoirEngineering.Runtime;
 /// <see cref="IEntitiesManager.EntityAdded"/>/<see cref="IEntitiesManager.EntityRemoved"/>,
 /// rather than re-querying the engine's entity collection on every tick.
 ///
+/// Every event subscription in this class uses the <c>NonSaveable</c> variants
+/// (<c>AddNonSaveable</c>/<c>RemoveNonSaveable</c>), including the two entity events. The plain
+/// <c>Add</c>/<c>Remove</c> overloads on an <c>IEvent&lt;T&gt;</c> register the callback in the
+/// save game, which requires serializing the subscribing object itself - fine for the engine's
+/// own saved managers, but this class is a plain unsaved service, so a saveable subscription
+/// makes every save fail with "Failed to create generic serializer for 'GeologyRegenManager'".
+///
 /// Three separate recharge rates are used, reflecting three different real-world pacing
 /// categories - expressed here as a per-tick fraction of the same rates this manager used before
 /// switching to per-tick accumulation, so the maximum achievable long-run rate for each tier is
@@ -191,14 +198,14 @@ public sealed class GeologyRegenManager : IDisposable {
             }
         }
 
-        m_entitiesManager.EntityAdded.Add(this, onEntityAdded);
-        m_entitiesManager.EntityRemoved.Add(this, onEntityRemoved);
+        m_entitiesManager.EntityAdded.AddNonSaveable(this, onEntityAdded);
+        m_entitiesManager.EntityRemoved.AddNonSaveable(this, onEntityRemoved);
         ((IEventNonSaveable)m_simLoopEvents.Update).AddNonSaveable<GeologyRegenManager>(this, OnSimUpdate);
     }
 
     public void Dispose() {
-        m_entitiesManager.EntityAdded.Remove(this, onEntityAdded);
-        m_entitiesManager.EntityRemoved.Remove(this, onEntityRemoved);
+        m_entitiesManager.EntityAdded.RemoveNonSaveable(this, onEntityAdded);
+        m_entitiesManager.EntityRemoved.RemoveNonSaveable(this, onEntityRemoved);
         ((IEventNonSaveable)m_simLoopEvents.Update).RemoveNonSaveable<GeologyRegenManager>(this, OnSimUpdate);
     }
 
