@@ -164,22 +164,34 @@ The build automatically deploys the compiled DLL, `Libs/0Harmony.dll`, `manifest
 
 ## Release zip
 
-The **Release mod zip** workflow (`.github/workflows/release-zip.yml`) builds the zip ready to
-install (`<mod id>_<version>.zip`: extract it into `%APPDATA%\Captain of Industry\Mods`, it
-already contains the mod's own folder) and attaches it to the GitHub release of the version in
-`manifest.json`. It runs only on the `master` branch and needs no secrets or tokens.
+The **Release mod zip** workflow (`.github/workflows/release-zip.yml`) compiles the mod, builds
+the zip ready to install (`<mod id>_<version>.zip`: extract it into
+`%APPDATA%\Captain of Industry\Mods`, it already contains the mod's own folder) and attaches it
+to the GitHub release of the version in `manifest.json`. It runs only on the `master` branch and
+needs no secrets or tokens.
 
-GitHub cannot compile the mod (that needs the game's DLLs), so it packages the DLL committed in
-`dist/`:
+- Each push to `master` creates a **draft** release named after the version, with the zip, or
+  refreshes the zip if that release already exists. Write the notes and publish it.
+- It can also be started by hand: *Actions → Release mod zip → Run workflow*, branch `master`.
 
-1. Bump the version in `manifest.json` and build the mod in Release
-   (`dotnet build -c Release`): the build copies `GeologyReservoirEngineering.dll` to `dist/`.
-2. Commit `dist/GeologyReservoirEngineering.dll` together with the changes and bring them to `master`.
-3. The push to `master` creates a **draft** release named after the version, with the zip
-   attached. Write the release notes and publish it.
+Compiling needs the game's DLLs, which the modding policy forbids redistributing, so GitHub's
+own servers cannot build the mod. The workflow runs on a **self-hosted runner**: your own
+Windows PC with the game installed, which GitHub sends the job to.
 
-Each later push to `master` (or a manual run from *Actions → Release mod zip → Run workflow*)
-refreshes the zip of that version's release.
+One-time setup on that PC:
+
+1. Install the [.NET SDK](https://dotnet.microsoft.com/download) and set the `COI_ROOT`
+   environment variable to the game folder, as for local builds.
+2. In this repository open *Settings → Actions → Runners → New self-hosted runner*, choose
+   *Windows* and run the commands shown there. When `config.cmd` asks for additional labels,
+   enter `coi`.
+3. Start the runner with `run.cmd` (it must be running when you push to `master`; a job waits
+   in the queue until it is). If you install it as a Windows service instead, add the line
+   `COI_ROOT=<game folder>` to the `.env` file in the runner folder, because the service does
+   not see your user's environment variables.
+
+The same PC can serve several repositories: register one runner per repository, each in its
+own folder.
 
 ## Project structure
 
