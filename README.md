@@ -168,7 +168,6 @@ The build automatically deploys the compiled DLL, `Libs/0Harmony.dll`, `manifest
 Source/
   GeologyReservoirEngineeringMod.cs   Mod entry point (IMod implementation)
   ModIds.cs                           Prototype IDs owned by this mod
-  ModTranslation.cs                   JSON translation loader
   Data/
     ProductsData.cs                   Geothermal/Natural Gas deposit registration
     ToolbarCategoriesData.cs          Toolbar subcategories
@@ -184,7 +183,7 @@ Source/
     InjectionPumpProto.cs             Custom machine prototype
     InjectionPump.cs                  Custom machine entity
 Translations/
-  en.json, it.json, fr.json, es.json, de.json, pt.json
+  it.json, fr.json, es.json, de.json, pt.json
 Assets/Geothermal/
   NaturalGas.png                      Source icon (see "Custom assets")
 AssetBundles/
@@ -213,13 +212,17 @@ custom icons or models, follow the "Assets creation" section of the official mod
 
 ## Localization
 
-Translation strings live in `Translations/<lang>.json` as flat key-value pairs
-(`<category>.<id>.<field>`). At startup, the mod resolves a translation file in this order: exact
-game culture (e.g. `it-IT`), two-letter language code (e.g. `it`), then `en`. A missing or
-malformed translation file falls back to the English string embedded in the source code.
+The mod uses the game's native mod translation system (Captain of Industry 0.8.8+, see the
+[official guide](https://coigame.com/Modding/Translations)). The English text is written in the
+source code; `Translations/<lang>.json` holds a JSON array of `["<stringId>", "<text>"]` pairs. A
+proto's name and description use the IDs `<protoId>__name` and `<protoId>__desc` (e.g.
+`UndergroundInjectionPump__name`); the injection pump's reserve-panel text is the prefixed
+`GeologyReservoirEngineering.InjectionPumpReserveDescription`.
 
-To add a new language, copy `Translations/en.json`, translate the values, and save it as
-`<language-code>.json` in the same folder.
+To add a language, or to find the IDs of strings not translated yet (such as the wells'
+reserve-status descriptions), start a game with the mod enabled and run
+`export_mod_translations GeologyReservoirEngineering` in the console: it writes a `template.json`
+with every string ID of the mod. Copy it to `<language-code>.json` and translate the texts.
 
 ## Design notes and known limitations
 

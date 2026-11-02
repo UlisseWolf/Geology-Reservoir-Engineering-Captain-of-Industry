@@ -31,7 +31,7 @@ internal class ToolbarCategoriesData : IModData {
 
         registrator.PrototypesDb.Add(new ToolbarCategoryProto(
             ModIds.ToolbarCategories.Geothermal,
-            Proto.CreateStr(ModIds.ToolbarCategories.Geothermal, ModTranslation.Get("toolbar-category.Geothermal.name", "Geothermal"), null),
+            Proto.CreateStr(ModIds.ToolbarCategories.Geothermal, "Geothermal", null),
             order: 2f,
             iconPath: "Assets/Unity/UserInterface/Toolbar/Power.svg",
             isTransportBuildAllowed: false,
@@ -39,7 +39,7 @@ internal class ToolbarCategoriesData : IModData {
 
         registrator.PrototypesDb.Add(new ToolbarCategoryProto(
             ModIds.ToolbarCategories.ElectricGenerators,
-            Proto.CreateStr(ModIds.ToolbarCategories.ElectricGenerators, ModTranslation.Get("toolbar-category.ElectricGenerators.name", "Electric generators"), null),
+            Proto.CreateStr(ModIds.ToolbarCategories.ElectricGenerators, "Electric generators", null),
             order: 3f,
             iconPath: "Assets/Unity/UserInterface/Toolbar/Power.svg",
             isTransportBuildAllowed: false,
@@ -47,7 +47,7 @@ internal class ToolbarCategoriesData : IModData {
 
         registrator.PrototypesDb.Add(new ToolbarCategoryProto(
             ModIds.ToolbarCategories.Groundwater,
-            Proto.CreateStr(ModIds.ToolbarCategories.Groundwater, ModTranslation.Get("toolbar-category.Groundwater.name", "Groundwater"), null),
+            Proto.CreateStr(ModIds.ToolbarCategories.Groundwater, "Groundwater", null),
             order: 1f,
             iconPath: "Assets/Unity/UserInterface/Toolbar/WaterMachines.svg",
             isTransportBuildAllowed: false,
@@ -55,7 +55,7 @@ internal class ToolbarCategoriesData : IModData {
 
         registrator.PrototypesDb.Add(new ToolbarCategoryProto(
             ModIds.ToolbarCategories.OilWells,
-            Proto.CreateStr(ModIds.ToolbarCategories.OilWells, ModTranslation.Get("toolbar-category.OilWells.name", "Oil wells"), null),
+            Proto.CreateStr(ModIds.ToolbarCategories.OilWells, "Oil wells", null),
             order: 1f,
             iconPath: "Assets/Unity/UserInterface/Toolbar/Oil.svg",
             isTransportBuildAllowed: true,

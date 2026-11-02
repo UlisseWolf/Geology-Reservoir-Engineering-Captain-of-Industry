@@ -85,6 +85,9 @@
       <_DeployedTranslations Include="$(ProjectDir)Translations\**\*" />
       <_DeployedTranslationsDest Include="@(_DeployedTranslations->Replace('$(ProjectDir)Translations\', '$(COI_MODS)\$(TargetName)\Translations\'))" />
     </ItemGroup>
+    <!-- en.json was dropped in 1.5.0 (English now lives in code, game 0.8.8 translates
+         natively); remove a stale copy left in the deployed folder by older builds. -->
+    <Delete Files="$(COI_MODS)\$(TargetName)\Translations\en.json" />
     <Copy SourceFiles="@(_DeployedTranslations)" DestinationFiles="@(_DeployedTranslationsDest)" SkipUnchangedFiles="true" Condition="Exists('$(ProjectDir)Translations')" />
     <Copy SourceFiles="@(AssetBundles)" DestinationFolder="$(COI_MODS)\$(TargetName)\AssetBundles" Condition="'@(AssetBundles)' != ''" />
     <Message Text="[GeologyReservoirEngineering] Deployed to $(COI_MODS)\$(TargetName)\" Importance="high" />

@@ -64,8 +64,8 @@ internal class WorldMapData : IModData {
 
         Proto.Str strings = Proto.CreateStr(
             ModIds.World.NaturalGasRig,
-            ModTranslation.Get("world.NaturalGasRig.name", "Natural gas rig"),
-            ModTranslation.Get("world.NaturalGasRig.description", "This station provides natural gas when assigned with workers."));
+            "Natural gas rig",
+            "This station provides natural gas when assigned with workers.");
 
         // No dedicated "gas rig" World Map icon exists in the base game - both icon paths below
         // reuse the vanilla Oil Rig's own graphics as the closest available placeholder.

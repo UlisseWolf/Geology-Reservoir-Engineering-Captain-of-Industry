@@ -50,8 +50,8 @@ internal class ProductsData : IModData {
             ModIds.VirtualResources.GeothermalHighEnthalpy,
             Proto.CreateStr(
                 ModIds.VirtualResources.GeothermalHighEnthalpy,
-                ModTranslation.Get("virtual-resource.GeothermalHighEnthalpy.name", "Geothermal reservoir (high enthalpy)"),
-                ModTranslation.Get("virtual-resource.GeothermalHighEnthalpy.description", "A hot geothermal reservoir, hot enough to flash directly into high-pressure steam when tapped.")),
+                "Geothermal reservoir (high enthalpy)",
+                "A hot geothermal reservoir, hot enough to flash directly into high-pressure steam when tapped."),
             steamHi,
             isResourceFinal: false,
             new VirtualResourceProductProto.Gfx(13379614, 6.0.TilesThick())));
@@ -60,8 +60,8 @@ internal class ProductsData : IModData {
             ModIds.VirtualResources.GeothermalMediumEnthalpy,
             Proto.CreateStr(
                 ModIds.VirtualResources.GeothermalMediumEnthalpy,
-                ModTranslation.Get("virtual-resource.GeothermalMediumEnthalpy.name", "Geothermal reservoir (medium enthalpy)"),
-                ModTranslation.Get("virtual-resource.GeothermalMediumEnthalpy.description", "A moderately hot geothermal reservoir, yielding lower-pressure steam when tapped.")),
+                "Geothermal reservoir (medium enthalpy)",
+                "A moderately hot geothermal reservoir, yielding lower-pressure steam when tapped."),
             steamLo,
             isResourceFinal: false,
             new VirtualResourceProductProto.Gfx(15104532, 8.0.TilesThick())));
@@ -70,8 +70,8 @@ internal class ProductsData : IModData {
             ModIds.VirtualResources.GeothermalLowEnthalpy,
             Proto.CreateStr(
                 ModIds.VirtualResources.GeothermalLowEnthalpy,
-                ModTranslation.Get("virtual-resource.GeothermalLowEnthalpy.name", "Geothermal reservoir (low enthalpy)"),
-                ModTranslation.Get("virtual-resource.GeothermalLowEnthalpy.description", "A cooler geothermal reservoir, only yielding a depleted steam quality when tapped.")),
+                "Geothermal reservoir (low enthalpy)",
+                "A cooler geothermal reservoir, only yielding a depleted steam quality when tapped."),
             steamDepleted,
             isResourceFinal: false,
             new VirtualResourceProductProto.Gfx(15121448, 10.0.TilesThick())));
@@ -109,8 +109,8 @@ internal class ProductsData : IModData {
             ModIds.Products.NaturalGas,
             Proto.CreateStr(
                 ModIds.Products.NaturalGas,
-                ModTranslation.Get("product.NaturalGas.name", "Natural Gas"),
-                ModTranslation.Get("product.NaturalGas.description", "Raw natural gas as extracted from the ground. Treat it in a Chemical Plant to obtain Fuel Gas.")),
+                "Natural Gas",
+                "Raw natural gas as extracted from the ground. Treat it in a Chemical Plant to obtain Fuel Gas."),
             isStorable: true,
             canBeDiscarded: true,
             isWaste: false,
