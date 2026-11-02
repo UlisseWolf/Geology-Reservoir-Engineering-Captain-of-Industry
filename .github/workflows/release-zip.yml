@@ -1,89 +1,101 @@
 name: Release mod zip
 
-# Builds the zip ready to install in the game and attaches it to a GitHub release.
-# No secrets needed: it only uses the workflow's built-in GITHUB_TOKEN.
+# Builds the zip ready to install in the game (extract it into
+# %APPDATA%\Captain of Industry\Mods) and attaches it to the GitHub release of the version
+# in manifest.json. Runs only for the master branch and needs no secrets: it uses the
+# workflow's built-in GITHUB_TOKEN.
 #
-# How to use:
-#   1. Build the mod locally (dotnet build -c Release).
-#   2. Create a GitHub release with tag v<version> matching manifest.json, and attach the
-#      compiled GeologyReservoirEngineering.dll to it.
-#   3. When the release is published this workflow adds <mod id>-<version>.zip to it.
-#      To rebuild the zip of an existing release, run it manually from the master branch
-#      (Actions -> Release mod zip -> Run workflow) and enter the release tag.
+# GitHub cannot compile the mod (that needs the game's DLLs), so the compiled DLL comes from
+# dist/GeologyReservoirEngineering.dll in the repository: a Release build copies it there, commit it together with
+# the version bump in manifest.json.
 #
-# Only releases of the master branch are packaged: a release whose tag points to a commit
-# that is not on master (e.g. a staging build) is skipped, and manual runs are only allowed
-# from master.
+#  - push to master: creates a DRAFT release "<version>" with the zip (or refreshes the zip
+#    if the release already exists). Write the notes and publish it.
+#  - release published from master: refreshes the zip.
+#  - manual run (Actions -> Release mod zip -> Run workflow, branch master): same as a push.
 
 on:
+  push:
+    branches: [ master ]
   release:
     types: [ published ]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag (e.g. v1.0.0)
-        required: true
 
 permissions:
   contents: write
 
 jobs:
   zip:
-    # Manual runs only from master; releases are checked against master below.
-    if: github.event_name == 'release' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      TAG: ${{ github.event.release.tag_name || inputs.tag }}
       SRC: .
+      DIST: dist
       DLL: GeologyReservoirEngineering.dll
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
           fetch-depth: 0
 
-      - name: Check the release is on master
+      - name: Check branch
         id: branch
         run: |
-          if git merge-base --is-ancestor "$(git rev-parse "$TAG^{commit}")" origin/master; then
-            echo "on_master=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            tag='${{ github.event.release.tag_name }}'
+            git checkout -q "$tag"
+            if git merge-base --is-ancestor HEAD origin/master; then ok=true; else ok=false; fi
           else
-            echo "::notice::Release $TAG is not on the master branch (e.g. a staging build): no zip is attached."
-            echo "on_master=false" >> "$GITHUB_OUTPUT"
+            if [ "$GITHUB_REF" = "refs/heads/master" ]; then ok=true; else ok=false; fi
           fi
+          if [ "$ok" != true ]; then
+            echo "::notice::Not on the master branch: no zip is built."
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
 
       - name: Build zip
-        if: steps.branch.outputs.on_master == 'true'
+        if: steps.branch.outputs.ok == 'true'
         run: |
           set -euo pipefail
           id=$(jq -r .id "$SRC/manifest.json")
           version=$(jq -r .version "$SRC/manifest.json")
-          if [ "$TAG" != "v$version" ]; then
-            echo "::warning::Tag $TAG does not match manifest.json version $version"
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            tag='${{ github.event.release.tag_name }}'
+          else
+            tag="$version"
+          fi
+          if [ "${tag#v}" != "$version" ]; then
+            echo "::warning::Release $tag does not match manifest.json version $version"
           fi
 
-          # The compiled DLL is not in the repository: take it from the release assets.
-          mkdir -p dl
-          if ! gh release download "$TAG" --pattern "$DLL" --dir dl; then
-            echo "::error::Attach the compiled $DLL to release $TAG, then run this workflow again (Actions -> Release mod zip -> Run workflow)."
+          if [ ! -f "$DIST/$DLL" ]; then
+            echo "::error::$DIST/$DLL is missing. Build the mod in Release (it is copied there automatically) and commit it."
             exit 1
           fi
 
           out="stage/$id"
           mkdir -p "$out"
-          cp "$SRC/manifest.json" "dl/$DLL" "$out/"
+          cp "$SRC/manifest.json" "$DIST/$DLL" "$out/"
           if [ -f "$SRC/Thumbnail.png" ]; then cp "$SRC/Thumbnail.png" "$out/"; fi
           if [ -d "$SRC/Translations" ]; then cp -r "$SRC/Translations" "$out/"; fi
           if [ -d "$SRC/AssetBundles" ]; then cp -r "$SRC/AssetBundles" "$out/"; fi
           # Harmony ships with the mod (listed in manifest.json primary_dlls).
           cp "$SRC/Libs/0Harmony.dll" "$out/"
-          zip="$id-$version.zip"
+          zip="${id}_${version}.zip"
           # The zip contains the <mod id> folder itself: extract it into the Mods folder.
           (cd stage && zip -r -9 "../$zip" "$id")
           unzip -l "$zip"
           echo "ZIP=$zip" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
 
       - name: Attach zip to release
-        if: steps.branch.outputs.on_master == 'true'
-        run: gh release upload "$TAG" "$ZIP" --clobber
+        if: steps.branch.outputs.ok == 'true'
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+            echo "Zip attached to release $TAG"
+          else
+            gh release create "$TAG" "$ZIP" --draft --target master --title "$TAG" --notes ""
+            echo "::notice::Draft release $TAG created with the zip: write the notes and publish it."
+          fi

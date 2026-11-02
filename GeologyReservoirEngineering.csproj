@@ -92,4 +92,10 @@
     <Copy SourceFiles="@(AssetBundles)" DestinationFolder="$(COI_MODS)\$(TargetName)\AssetBundles" Condition="'@(AssetBundles)' != ''" />
     <Message Text="[GeologyReservoirEngineering] Deployed to $(COI_MODS)\$(TargetName)\" Importance="high" />
   </Target>
+
+  <!-- Release builds also copy the DLL to dist/ at the repository root: commit it, the
+       "Release mod zip" GitHub workflow packages it (GitHub cannot compile the mod). -->
+  <Target Name="CopyToDist" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)dist" />
+  </Target>
 </Project>
