@@ -92,7 +92,7 @@ internal class ResearchData : IResearchNodesData, IModData {
         ResearchNodeProto groundwaterPump = registrator.PrototypesDb.GetOrThrow<ResearchNodeProto>(Ids.Research.UndergroundWater);
 
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.SubsurfaceInjection.name", "Underground water injection"), ModIds.ResearchNodes.SubsurfaceInjection, costMonths: 28)
+            .Start("Underground water injection", ModIds.ResearchNodes.SubsurfaceInjection, costMonths: 28)
             .AddParents(groundwaterPump)
             .SetGridPosition(new Vector2i(28, 29))
             .AddMachineToUnlock(ModIds.Machines.WaterInjectionPump, unlockAllRecipes: false)
@@ -106,8 +106,8 @@ internal class ResearchData : IResearchNodesData, IModData {
         ResearchNodeProto subsurfaceInjection = registrator.PrototypesDb.GetOrThrow<ResearchNodeProto>(ModIds.ResearchNodes.SubsurfaceInjection);
 
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.GeothermalExtraction.name", "Geothermal extraction"), ModIds.ResearchNodes.GeothermalExtraction, costMonths: 90)
-            .Description(ModTranslation.Get("research.GeothermalExtraction.description", "Unlocks the three geothermal extraction wells, tapping high, medium, and low enthalpy reservoirs to produce steam."))
+            .Start("Geothermal extraction", ModIds.ResearchNodes.GeothermalExtraction, costMonths: 90)
+            .Description("Unlocks the three geothermal extraction wells, tapping high, medium, and low enthalpy reservoirs to produce steam.")
             .AddParents(subsurfaceInjection, powerGeneration2, waterRecovery, powerGeneration3)
             .SetGridPosition(new Vector2i(82, 33))
             .AddMachineToUnlock(ModIds.Machines.WellHighEnthalpy, unlockAllRecipes: true)
@@ -119,8 +119,8 @@ internal class ResearchData : IResearchNodesData, IModData {
         ResearchNodeProto thermalDesalination = registrator.PrototypesDb.GetOrThrow<ResearchNodeProto>(Ids.Research.ThermalDesalination);
 
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.EnhancedOilRecovery.name", "Enhanced oil recovery"), ModIds.ResearchNodes.EnhancedOilRecovery, costMonths: 110)
-            .Description(ModTranslation.Get("research.EnhancedOilRecovery.description", "Unlocks CO2 gas injection on the oil injection pump, recovering additional oil from an existing crude oil deposit."))
+            .Start("Enhanced oil recovery", ModIds.ResearchNodes.EnhancedOilRecovery, costMonths: 110)
+            .Description("Unlocks CO2 gas injection on the oil injection pump, recovering additional oil from an existing crude oil deposit.")
             .AddParents(carbonDioxideRecycling)
             .SetGridPosition(new Vector2i(132, 7))
             .AddMachineToUnlock(ModIds.Machines.OilInjectionPump, unlockAllRecipes: false)
@@ -128,8 +128,8 @@ internal class ResearchData : IResearchNodesData, IModData {
             .BuildAndAdd();
 
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.HydraulicFracturing.name", "Hydraulic fracturing"), ModIds.ResearchNodes.HydraulicFracturing, costMonths: 75)
-            .Description(ModTranslation.Get("research.HydraulicFracturing.description", "Unlocks seawater-based hydraulic fracturing on the oil injection pump, recovering additional oil from an existing crude oil deposit."))
+            .Start("Hydraulic fracturing", ModIds.ResearchNodes.HydraulicFracturing, costMonths: 75)
+            .Description("Unlocks seawater-based hydraulic fracturing on the oil injection pump, recovering additional oil from an existing crude oil deposit.")
             .AddParents(thermalDesalination)
             .SetGridPosition(new Vector2i(100, 11))
             .AddMachineToUnlock(ModIds.Machines.OilInjectionPump, unlockAllRecipes: false)
@@ -145,7 +145,7 @@ internal class ResearchData : IResearchNodesData, IModData {
         // steam) together, since they are two halves of one technique split only because the
         // oil injection pump's layout has a single fluid input port.
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.ThermalEnhancedOilRecovery.name", "Thermal enhanced oil recovery"), ModIds.ResearchNodes.ThermalEnhancedOilRecovery, costMonths: 260)
+            .Start("Thermal enhanced oil recovery", ModIds.ResearchNodes.ThermalEnhancedOilRecovery, costMonths: 260)
             .AddParents(superPressSteam)
             .SetGridPosition(new Vector2i(200, 33))
             .AddMachineToUnlock(ModIds.Machines.OilInjectionPump, unlockAllRecipes: false)
@@ -159,8 +159,8 @@ internal class ResearchData : IResearchNodesData, IModData {
         // production in the first place - consistent with tying each oil injection pump recipe
         // to whichever vanilla node unlocks its specific input product.
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.AcidStimulation.name", "Acid stimulation"), ModIds.ResearchNodes.AcidStimulation, costMonths: 65)
-            .Description(ModTranslation.Get("research.AcidStimulation.description", "Unlocks acid injection on the oil injection pump, recovering additional oil from an existing crude oil deposit."))
+            .Start("Acid stimulation", ModIds.ResearchNodes.AcidStimulation, costMonths: 65)
+            .Description("Unlocks acid injection on the oil injection pump, recovering additional oil from an existing crude oil deposit.")
             .AddParents(sulfurProcessing)
             .SetGridPosition(new Vector2i(70, 35))
             .AddMachineToUnlock(ModIds.Machines.OilInjectionPump, unlockAllRecipes: false)
@@ -192,8 +192,8 @@ internal class ResearchData : IResearchNodesData, IModData {
         // natural gas and hydrogen reforming are gas-handling technologies, and this keeps the
         // dependency in that part of the tree instead of the oil-extraction branch.
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.NaturalGasExtraction.name", "Natural gas extraction"), ModIds.ResearchNodes.NaturalGasExtraction, costMonths: 85)
-            .Description(ModTranslation.Get("research.NaturalGasExtraction.description", "Unlocks the natural gas well, the treatment recipe (Natural Gas into Fuel Gas), direct burning in the Flare and the gas-fired Boiler, thermal enhanced gas recovery (Low-pressure steam injection), and the Fuel Gas and Natural Gas generators."))
+            .Start("Natural gas extraction", ModIds.ResearchNodes.NaturalGasExtraction, costMonths: 85)
+            .Description("Unlocks the natural gas well, the treatment recipe (Natural Gas into Fuel Gas), direct burning in the Flare and the gas-fired Boiler, thermal enhanced gas recovery (Low-pressure steam injection), and the Fuel Gas and Natural Gas generators.")
             .AddParents(hydrogenProduction)
             .SetGridPosition(new Vector2i(102, 3))
             .AddMachineToUnlock(ModIds.Machines.NaturalGasWell, unlockAllRecipes: true)
@@ -215,8 +215,8 @@ internal class ResearchData : IResearchNodesData, IModData {
         // on Natural gas extraction, since storage is a use for already-treated gas, downstream
         // of being able to extract/treat it at all.
         registrator.ResearchNodeProtoBuilder
-            .Start(ModTranslation.Get("research.NaturalGasStorage.name", "Underground gas storage"), ModIds.ResearchNodes.NaturalGasStorage, costMonths: 100)
-            .Description(ModTranslation.Get("research.NaturalGasStorage.description", "Unlocks the natural gas injection pump, storing already-treated Fuel Gas underground in a Natural Gas deposit for later withdrawal."))
+            .Start("Underground gas storage", ModIds.ResearchNodes.NaturalGasStorage, costMonths: 100)
+            .Description("Unlocks the natural gas injection pump, storing already-treated Fuel Gas underground in a Natural Gas deposit for later withdrawal.")
             .AddParents(naturalGasExtraction)
             .SetGridPosition(new Vector2i(108, 1))
             .AddMachineToUnlock(ModIds.Machines.NaturalGasInjectionPump, unlockAllRecipes: false)

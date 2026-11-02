@@ -77,7 +77,9 @@ internal class PowerGeneratorsData : IModData {
         var gfx = new ElectricityGeneratorFromProductProto.Gfx(
             "Assets/Base/Machines/PowerPlant/CombustionEngineT2.prefab",
             ImmutableArray<ParticlesParams>.Empty,
-            "Assets/Base/Machines/PowerPlant/CombustionEngine/CombustionEngine_Sound.prefab",
+            // Sound prefab: obsolete since game 0.8.8 (CombustionEngine_Sound.prefab no longer
+            // exists; entity sounds now come from the game's sound bindings).
+            default,
             categories,
             useSemiInstancedRendering: true);
 
@@ -85,8 +87,8 @@ internal class PowerGeneratorsData : IModData {
             ModIds.Machines.GasGenerator,
             Proto.CreateStr(
                 ModIds.Machines.GasGenerator,
-                ModTranslation.Get("build-machine.GasGenerator.name", "Gas generator"),
-                ModTranslation.Get("build-machine.GasGenerator.description", "Burns Fuel Gas to create electricity.")),
+                "Gas generator",
+                "Burns Fuel Gas to create electricity."),
             layout,
             costs,
             5000.Kw(),
@@ -104,8 +106,8 @@ internal class PowerGeneratorsData : IModData {
             ModIds.Machines.NaturalGasGenerator,
             Proto.CreateStr(
                 ModIds.Machines.NaturalGasGenerator,
-                ModTranslation.Get("build-machine.NaturalGasGenerator.name", "Natural gas generator"),
-                ModTranslation.Get("build-machine.NaturalGasGenerator.description", "Burns raw Natural Gas to create electricity, without treating it into Fuel Gas first.")),
+                "Natural gas generator",
+                "Burns raw Natural Gas to create electricity, without treating it into Fuel Gas first."),
             layout,
             costs,
             5000.Kw(),

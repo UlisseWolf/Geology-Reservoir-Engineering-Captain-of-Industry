@@ -56,8 +56,6 @@ public sealed class GeologyReservoirEngineeringMod : IMod {
     public void RegisterPrototypes(ProtoRegistrator registrator) {
         Log.Info("[Geology & Reservoir Engineering] Registering prototypes");
 
-        ModTranslation.Initialize(Manifest.RootDirectoryPath);
-
         registrator.RegisterData<ProductsData>();
         registrator.RegisterData<WorldMapData>();
         registrator.RegisterData<ToolbarCategoriesData>();

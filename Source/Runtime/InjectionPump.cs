@@ -14,6 +14,7 @@ using Mafi.Core.Prototypes;
 using Mafi.Core.Terrain;
 using Mafi.Core.Terrain.Generation;
 using Mafi.Core.Vehicles;
+using Mafi.Localization;
 using Mafi.Serialization;
 
 namespace GeologyReservoirEngineering.Runtime;
@@ -135,7 +136,17 @@ public sealed class InjectionPump : Machine, IVirtualResourceMiningEntity {
         return resource.Capacity.Value == 0 ? 1.0 : (double)resource.Quantity.Value / resource.Capacity.Value;
     }
 
-    public string Description => ModTranslation.Get("build-machine.InjectionPump.reserve-description", "Status of the underground reservoir this pump is recharging.");
+    /// <summary>
+    /// Reserve-panel description, translated by the game's own mod translation system
+    /// (game 0.8.8+): the ID carries the mod-ID prefix, and the translations live in
+    /// <c>Translations/&lt;lang&gt;.json</c> under that same ID.
+    /// </summary>
+    private static readonly LocStr s_reserveDescription = Loc.Str(
+        "GeologyReservoirEngineering.InjectionPumpReserveDescription",
+        "Status of the underground reservoir this pump is recharging.",
+        "Description of the reserve status panel shown on an injection pump");
+
+    public string Description => s_reserveDescription.TranslatedString;
 
     /// <summary>
     /// The interface declares a non-nullable return type. This can legitimately be null when no
