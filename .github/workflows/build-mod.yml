@@ -1,0 +1,110 @@
+name: Build mod package
+
+# Builds the mod and packages it as a zip ready to extract into
+# %APPDATA%\Captain of Industry\Mods.
+#  - every push / pull request / manual run: the zip is attached to the run as an artifact
+#  - pushing a tag like v1.2.3: the zip is also published as a GitHub release
+#
+# Compiling needs the game's DLLs, which cannot be stored in this public repository.
+# They are downloaded from a release of a PRIVATE repository instead; see
+# "Automatic builds" in README.md and tools/New-CoiRefs.ps1 for the one-time setup.
+
+on:
+  push:
+    branches: [ "**" ]
+    tags: [ "v*" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # Private repository holding the zipped reference DLLs (override with a repository
+  # variable named COI_REFS_REPO).
+  COI_REFS_REPO: ${{ vars.COI_REFS_REPO || 'UlisseWolf/coi-reference-assemblies' }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check setup
+        shell: pwsh
+        env:
+          HAS_TOKEN: ${{ secrets.COI_REFS_TOKEN != '' }}
+        run: |
+          if ($env:HAS_TOKEN -ne 'true') {
+            Write-Error "Missing repository secret COI_REFS_TOKEN (read access to $env:COI_REFS_REPO). See 'Automatic builds' in README.md."
+            exit 1
+          }
+
+      - name: Download game reference DLLs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.COI_REFS_TOKEN }}
+        run: |
+          $refs = Join-Path $env:RUNNER_TEMP 'coi'
+          $managed = Join-Path $refs 'Captain of Industry_Data\Managed'
+          New-Item -ItemType Directory -Force -Path $managed | Out-Null
+          gh release download --repo $env:COI_REFS_REPO --pattern 'coi-refs.zip' --dir $env:RUNNER_TEMP
+          if ($LASTEXITCODE -ne 0) { throw "Could not download coi-refs.zip from $env:COI_REFS_REPO" }
+          Expand-Archive -Path (Join-Path $env:RUNNER_TEMP 'coi-refs.zip') -DestinationPath $managed -Force
+          "COI_ROOT=$refs" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Read manifest
+        id: manifest
+        shell: pwsh
+        run: |
+          $m = Get-Content -Raw -Path 'manifest.json' | ConvertFrom-Json
+          "id=$($m.id)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=$($m.version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$($m.version)") {
+            Write-Error "Tag $env:GITHUB_REF_NAME does not match manifest.json version $($m.version) (expected tag v$($m.version))."
+            exit 1
+          }
+
+      - name: Build
+        shell: pwsh
+        run: |
+          # The project's own deploy step copies exactly the files the game needs into
+          # <COI_MODS>\<mod id>\, so it is pointed at a staging folder instead of %APPDATA%.
+          $stage = Join-Path $env:RUNNER_TEMP 'stage'
+          dotnet build 'GeologyReservoirEngineering.csproj' -c Release -p:DeployToModsFolder=true "-p:COI_MODS=$stage"
+          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+
+      - name: Package
+        id: package
+        shell: pwsh
+        run: |
+          $id = '${{ steps.manifest.outputs.id }}'
+          $stage = Join-Path $env:RUNNER_TEMP 'stage'
+          if (-not (Test-Path (Join-Path $stage "$id\manifest.json"))) { throw "Build output not found in $stage\$id" }
+          $zip = "$id-${{ steps.manifest.outputs.version }}.zip"
+          # The zip contains the <mod id> folder itself: extract it into the Mods folder.
+          Compress-Archive -Path (Join-Path $stage $id) -DestinationPath $zip -Force
+          "zip=$zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Get-ChildItem -Recurse (Join-Path $stage $id) | Select-Object -ExpandProperty FullName
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Artifacts are always downloaded zipped, so this one is the mod zip inside a zip;
+          # tagged releases below carry the mod zip directly.
+          name: ${{ steps.manifest.outputs.id }}-${{ steps.manifest.outputs.version }}
+          path: ${{ steps.package.outputs.zip }}
+          if-no-files-found: error
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view $env:GITHUB_REF_NAME 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:GITHUB_REF_NAME '${{ steps.package.outputs.zip }}' --clobber
+          } else {
+            gh release create $env:GITHUB_REF_NAME '${{ steps.package.outputs.zip }}' --title "${{ steps.manifest.outputs.id }} $env:GITHUB_REF_NAME" --generate-notes
+          }
