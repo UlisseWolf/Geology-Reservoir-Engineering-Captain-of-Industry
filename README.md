@@ -162,22 +162,6 @@ The build automatically deploys the compiled DLL, `Libs/0Harmony.dll`, `manifest
 `Translations/`, and `AssetBundles/` to
 `%APPDATA%\Captain of Industry\Mods\GeologyReservoirEngineering\`.
 
-## Release zip
-
-The **Release mod zip** workflow (`.github/workflows/release-zip.yml`) builds the zip ready to
-install (extract it into `%APPDATA%\Captain of Industry\Mods`; it already contains the mod's
-own folder) and attaches it to a GitHub release. It needs no secrets or tokens.
-It only packages releases of the `master` branch: a release whose tag is on another branch
-(such as `staging`) gets no zip.
-
-1. Build the mod locally (`dotnet build -c Release`).
-2. Create a release from `master` with the tag `v<version>` matching `manifest.json` and attach the compiled
-   `GeologyReservoirEngineering.dll` to it before publishing.
-3. Once the release is published, the workflow adds `<mod id>-<version>.zip` to it.
-
-If the DLL was missing, attach it and run the workflow again from *Actions → Release mod zip →
-Run workflow* with the `master` branch selected, entering the release tag.
-
 ## Project structure
 
 ```
