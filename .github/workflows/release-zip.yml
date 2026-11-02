@@ -1,0 +1,70 @@
+name: Release mod zip
+
+# Builds the zip ready to install in the game and attaches it to a GitHub release.
+# No secrets needed: it only uses the workflow's built-in GITHUB_TOKEN.
+#
+# How to use:
+#   1. Build the mod locally (dotnet build -c Release).
+#   2. Create a GitHub release with tag v<version> matching manifest.json, and attach the
+#      compiled GeologyReservoirEngineering.dll to it.
+#   3. When the release is published this workflow adds <mod id>-<version>.zip to it.
+#      To rebuild the zip of an existing release, run it manually (Actions -> Release mod
+#      zip -> Run workflow) and enter the release tag.
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (e.g. v1.0.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      SRC: .
+      DLL: GeologyReservoirEngineering.dll
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Build zip
+        run: |
+          set -euo pipefail
+          id=$(jq -r .id "$SRC/manifest.json")
+          version=$(jq -r .version "$SRC/manifest.json")
+          if [ "$TAG" != "v$version" ]; then
+            echo "::warning::Tag $TAG does not match manifest.json version $version"
+          fi
+
+          # The compiled DLL is not in the repository: take it from the release assets.
+          mkdir -p dl
+          if ! gh release download "$TAG" --pattern "$DLL" --dir dl; then
+            echo "::error::Attach the compiled $DLL to release $TAG, then run this workflow again (Actions -> Release mod zip -> Run workflow)."
+            exit 1
+          fi
+
+          out="stage/$id"
+          mkdir -p "$out"
+          cp "$SRC/manifest.json" "dl/$DLL" "$out/"
+          if [ -f "$SRC/Thumbnail.png" ]; then cp "$SRC/Thumbnail.png" "$out/"; fi
+          if [ -d "$SRC/Translations" ]; then cp -r "$SRC/Translations" "$out/"; fi
+          if [ -d "$SRC/AssetBundles" ]; then cp -r "$SRC/AssetBundles" "$out/"; fi
+          # Harmony ships with the mod (listed in manifest.json primary_dlls).
+          cp "$SRC/Libs/0Harmony.dll" "$out/"
+          zip="$id-$version.zip"
+          # The zip contains the <mod id> folder itself: extract it into the Mods folder.
+          (cd stage && zip -r -9 "../$zip" "$id")
+          unzip -l "$zip"
+          echo "ZIP=$zip" >> "$GITHUB_ENV"
+
+      - name: Attach zip to release
+        run: gh release upload "$TAG" "$ZIP" --clobber

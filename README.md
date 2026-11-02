@@ -162,31 +162,19 @@ The build automatically deploys the compiled DLL, `Libs/0Harmony.dll`, `manifest
 `Translations/`, and `AssetBundles/` to
 `%APPDATA%\Captain of Industry\Mods\GeologyReservoirEngineering\`.
 
-## Automatic builds
+## Release zip
 
-The **Build mod package** workflow (`.github/workflows/build-mod.yml`) compiles the mod on
-GitHub and produces a zip ready to install: extract it into
-`%APPDATA%\Captain of Industry\Mods` (the zip already contains the mod's own folder).
+The **Release mod zip** workflow (`.github/workflows/release-zip.yml`) builds the zip ready to
+install (extract it into `%APPDATA%\Captain of Industry\Mods`; it already contains the mod's
+own folder) and attaches it to a GitHub release. It needs no secrets or tokens.
 
-- Every push, pull request or manual run (*Actions → Build mod package → Run workflow*)
-  attaches the zip to the run as an artifact.
-- Pushing a tag `v<version>` matching `manifest.json` (e.g. `git tag v1.2.3 && git push origin v1.2.3`)
-  also publishes the zip as a GitHub release.
+1. Build the mod locally (`dotnet build -c Release`).
+2. Create a release with the tag `v<version>` matching `manifest.json` and attach the compiled
+   `GeologyReservoirEngineering.dll` to it before publishing.
+3. Once the release is published, the workflow adds `<mod id>-<version>.zip` to it.
 
-Compiling needs the game's DLLs, which must not be published, so the workflow downloads them
-from a release of a **private** repository. One-time setup, and again after a game update
-that changes the modding API:
-
-1. On a PC with the game installed, the [.NET SDK](https://dotnet.microsoft.com/download) and
-   the [GitHub CLI](https://cli.github.com) (`gh auth login`), run
-   `.\tools\New-CoiRefs.ps1 -GameVersion 0.8.8`. It turns the game DLLs into reference
-   assemblies (signatures only, no code) and uploads them as `coi-refs.zip` to the private
-   repository `UlisseWolf/coi-reference-assemblies`, creating it if needed.
-2. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
-   with read-only *Contents* access to that private repository.
-3. In this repository, *Settings → Secrets and variables → Actions*, add it as the secret
-   `COI_REFS_TOKEN`. To use a different private repository, also add a variable
-   `COI_REFS_REPO` with its `owner/name`.
+If the DLL was missing, attach it and run the workflow again from *Actions → Release mod zip →
+Run workflow*, entering the release tag.
 
 ## Project structure
 
