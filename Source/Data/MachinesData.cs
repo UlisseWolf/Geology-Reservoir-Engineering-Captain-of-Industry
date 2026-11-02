@@ -50,8 +50,8 @@ internal class MachinesData : IModData {
     public void RegisterData(ProtoRegistrator registrator) {
         registerWell(
             registrator,
-            name: ModTranslation.Get("build-machine.GeothermalWellHighEnthalpy.name", "Geothermal well (high enthalpy)"),
-            resourceDescription: ModTranslation.Get("build-machine.GeothermalWellHighEnthalpy.reserve-description", "Shows the overall status of the high enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time."),
+            name: "Geothermal well (high enthalpy)",
+            resourceDescription: "Shows the overall status of the high enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time.",
             machineId: ModIds.Machines.WellHighEnthalpy,
             minedResource: ModIds.VirtualResources.GeothermalHighEnthalpy,
             electricityKw: 220,
@@ -63,8 +63,8 @@ internal class MachinesData : IModData {
 
         registerWell(
             registrator,
-            name: ModTranslation.Get("build-machine.GeothermalWellMediumEnthalpy.name", "Geothermal well (medium enthalpy)"),
-            resourceDescription: ModTranslation.Get("build-machine.GeothermalWellMediumEnthalpy.reserve-description", "Shows the overall status of the medium enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time."),
+            name: "Geothermal well (medium enthalpy)",
+            resourceDescription: "Shows the overall status of the medium enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time.",
             machineId: ModIds.Machines.WellMediumEnthalpy,
             minedResource: ModIds.VirtualResources.GeothermalMediumEnthalpy,
             electricityKw: 160,
@@ -76,8 +76,8 @@ internal class MachinesData : IModData {
 
         registerWell(
             registrator,
-            name: ModTranslation.Get("build-machine.GeothermalWellLowEnthalpy.name", "Geothermal well (low enthalpy)"),
-            resourceDescription: ModTranslation.Get("build-machine.GeothermalWellLowEnthalpy.reserve-description", "Shows the overall status of the low enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time."),
+            name: "Geothermal well (low enthalpy)",
+            resourceDescription: "Shows the overall status of the low enthalpy geothermal reservoir. Left un-recharged, it will slowly deplete; an injection pump built nearby will recharge it over time.",
             machineId: ModIds.Machines.WellLowEnthalpy,
             minedResource: ModIds.VirtualResources.GeothermalLowEnthalpy,
             electricityKw: 110,
@@ -134,11 +134,12 @@ internal class MachinesData : IModData {
             ImmutableArray.Create(geoHigh, geoMedium, geoLow, groundwater));
 
         // MachineProto declares its own Gfx type (MachineProto.Gfx : LayoutEntityProto.Gfx),
-        // which carries machine-specific data such as machineSoundPrefabPath.
+        // which carries machine-specific data. Its machineSoundPrefabPath is obsolete since game
+        // 0.8.8 (entity sounds now come from the game's sound bindings), so it is not passed.
         var gfx = new MachineProto.Gfx(
             "Assets/Base/Machines/Pump/LandWaterPump.prefab",
             categories,
-            machineSoundPrefabPath: Option.Create("Assets/Base/Machines/Pump/LandWaterPump/LandWaterPump_Sound.prefab"),
+            machineSoundPrefabPath: default,
             useSemiInstancedRendering: true,
             visualizedLayers: visualizedLayers);
 
@@ -146,8 +147,8 @@ internal class MachinesData : IModData {
             ModIds.Machines.WaterInjectionPump,
             Proto.CreateStr(
                 ModIds.Machines.WaterInjectionPump,
-                ModTranslation.Get("build-machine.WaterInjectionPump.name", "Water injection pump"),
-                ModTranslation.Get("build-machine.WaterInjectionPump.description", "Injects water underground, recharging whatever deposit is beneath it over time - a geothermal reservoir or a groundwater aquifer. Build within range of the deposit it should support.")),
+                "Water injection pump",
+                "Injects water underground, recharging whatever deposit is beneath it over time - a geothermal reservoir or a groundwater aquifer. Build within range of the deposit it should support."),
             layout,
             costs,
             220.Kw(),
@@ -231,7 +232,7 @@ internal class MachinesData : IModData {
         var gfx = new MachineProto.Gfx(
             "Assets/Base/Machines/Pump/LandWaterPump.prefab",
             categories,
-            machineSoundPrefabPath: Option.Create("Assets/Base/Machines/Pump/LandWaterPump/LandWaterPump_Sound.prefab"),
+            machineSoundPrefabPath: default,
             useSemiInstancedRendering: true,
             visualizedLayers: visualizedLayers);
 
@@ -239,8 +240,8 @@ internal class MachinesData : IModData {
             ModIds.Machines.OilInjectionPump,
             Proto.CreateStr(
                 ModIds.Machines.OilInjectionPump,
-                ModTranslation.Get("build-machine.OilInjectionPump.name", "Oil injection pump"),
-                ModTranslation.Get("build-machine.OilInjectionPump.description", "Injects CO2, seawater, or steam into a crude oil deposit for enhanced oil recovery, hydraulic fracturing, or thermal EOR. Only works on a crude oil deposit - build within range of the deposit it should support.")),
+                "Oil injection pump",
+                "Injects CO2, seawater, or steam into a crude oil deposit for enhanced oil recovery, hydraulic fracturing, or thermal EOR. Only works on a crude oil deposit - build within range of the deposit it should support."),
             layout,
             costs,
             220.Kw(),
@@ -344,7 +345,7 @@ internal class MachinesData : IModData {
         var gfx = new MachineProto.Gfx(
             "Assets/Base/Machines/Pump/LandWaterPump.prefab",
             categories,
-            machineSoundPrefabPath: Option.Create("Assets/Base/Machines/Pump/LandWaterPump/LandWaterPump_Sound.prefab"),
+            machineSoundPrefabPath: default,
             useSemiInstancedRendering: true,
             visualizedLayers: visualizedLayers);
 
@@ -352,8 +353,8 @@ internal class MachinesData : IModData {
             ModIds.Machines.NaturalGasInjectionPump,
             Proto.CreateStr(
                 ModIds.Machines.NaturalGasInjectionPump,
-                ModTranslation.Get("build-machine.NaturalGasInjectionPump.name", "Natural gas injection pump"),
-                ModTranslation.Get("build-machine.NaturalGasInjectionPump.description", "Injects a fluid into a Natural Gas deposit. Two recipes: already-treated Fuel Gas for underground storage, or Low-pressure steam (produced by the medium enthalpy geothermal well) for thermal enhanced recovery. Depleted steam is not accepted. Only works on a Natural Gas deposit - build within range of the deposit it should support.")),
+                "Natural gas injection pump",
+                "Injects a fluid into a Natural Gas deposit. Two recipes: already-treated Fuel Gas for underground storage, or Low-pressure steam (produced by the medium enthalpy geothermal well) for thermal enhanced recovery. Depleted steam is not accepted. Only works on a Natural Gas deposit - build within range of the deposit it should support."),
             layout,
             costs,
             220.Kw(),
@@ -411,7 +412,7 @@ internal class MachinesData : IModData {
 
         WellPumpProto well = registrator.WellPumpProtoBuilder
             .Start(name, resourceDescription, machineId)
-            .Description(ModTranslation.Get("build-machine.GeothermalWell.description", "Pumps steam from an underground geothermal reservoir."))
+            .Description("Pumps steam from an underground geothermal reservoir.")
             .SetLayout(
                 "[2][7][7][2]   ",
                 "[2][7][7][2]   ",
@@ -424,7 +425,6 @@ internal class MachinesData : IModData {
             .SetElectricityConsumption(electricityKw.Kw())
             .SetMinedProduct(minedResource)
             .SetCategories(ModIds.ToolbarCategories.Geothermal)
-            .SetMachineSound("Assets/Base/Machines/Pump/LandWaterPump/LandWaterPump_Sound.prefab")
             .EnableSemiInstancedRendering()
             .BuildAndAdd();
 
@@ -448,10 +448,10 @@ internal class MachinesData : IModData {
     private static void registerNaturalGasWell(ProtoRegistrator registrator) {
         WellPumpProto well = registrator.WellPumpProtoBuilder
             .Start(
-                ModTranslation.Get("build-machine.NaturalGasWell.name", "Natural gas well"),
-                ModTranslation.Get("build-machine.NaturalGasWell.reserve-description", "Shows the overall status of the natural gas deposit."),
+                "Natural gas well",
+                "Shows the overall status of the natural gas deposit.",
                 ModIds.Machines.NaturalGasWell)
-            .Description(ModTranslation.Get("build-machine.NaturalGasWell.description", "Extracts raw natural gas from an underground deposit, whether standalone or associated with a crude oil deposit. Can be built alongside an Oil Pump on the same deposit to extract both simultaneously."))
+            .Description("Extracts raw natural gas from an underground deposit, whether standalone or associated with a crude oil deposit. Can be built alongside an Oil Pump on the same deposit to extract both simultaneously.")
             .SetLayout(
                 "[2][7][7][2]   ",
                 "[2][7][7][2]   ",
@@ -464,7 +464,6 @@ internal class MachinesData : IModData {
             .SetElectricityConsumption(180.Kw())
             .SetMinedProduct(ModIds.VirtualResources.NaturalGas)
             .SetCategories(ModIds.ToolbarCategories.OilWells)
-            .SetMachineSound("Assets/Base/Machines/Pump/LandWaterPump/LandWaterPump_Sound.prefab")
             .EnableSemiInstancedRendering()
             .BuildAndAdd();
 
